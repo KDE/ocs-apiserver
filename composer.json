@@ -1,0 +1,28 @@
+{
+  "name": "pling/ocs-api",
+  "description": "",
+  "minimum-stability": "dev",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Alexander",
+      "email": "alexander@pling.com"
+    }
+  ],
+  "autoload": {
+    "psr-0": {
+      "": [
+        "application/models",
+        "application/controllers",
+        "application/plugins",
+        "library/"
+      ],
+      "Local_": "library/",
+      "Model_": "application/",
+      "Controller_": "application/",
+      "Plugin_": "application/"
+    }
+  },
+  "require": {
+  }
+}
