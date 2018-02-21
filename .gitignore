@@ -1,3 +1,7 @@
+# ignore local files and directories
+local/*
+*.local*
+.htpasswd*
 
 # Created by https://www.gitignore.io/api/phpstorm
 
