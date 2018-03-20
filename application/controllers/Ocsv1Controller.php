@@ -59,6 +59,7 @@
  * 9 = Arch
  * 10 = open/Suse
  * 11 = Redhat
+ * 12 = Source Code
  *
  * ----
  *
@@ -1318,18 +1319,24 @@ class Ocsv1Controller extends Zend_Controller_Action
             // package_types parameter: values separated by ","
             $packageTypeList = explode(',', $this->_params['package_types']);
 
-            $storeConfig = Zend_Registry::isRegistered('store_config') ? Zend_Registry::get('store_config') : null;
+            //20180320 ronald: allow filter package_type for all pages
+            /*$storeConfig = Zend_Registry::isRegistered('store_config') ? Zend_Registry::get('store_config') : null;
             $storePackageTypeIds = null;
             if ($storeConfig) {
                 $storePackageTypeIds = $storeConfig['package_type'];
             }
-
             if ($storePackageTypeIds) {
                 $tableProjectSelect->join(array(
                     'package_type' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM project_package_type WHERE '
                         . $tableProject->getAdapter()->quoteInto('package_type_id IN (?)', $packageTypeList) . ')')
                 ), 'project.project_id = package_type.project_id', array());
             }
+            */
+            $tableProjectSelect->join(array(
+                'package_type' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM project_package_type WHERE '
+                    . $tableProject->getAdapter()->quoteInto('package_type_id IN (?)', $packageTypeList) . ')')
+            ), 'project.project_id = package_type.project_id', array());
+            
         }
 
         $hasSearchPart = false;

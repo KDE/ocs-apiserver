@@ -67,6 +67,7 @@ What changes from official OCS v1 spec
   9 = Arch
   10 = open/Suse
   11 = Redhat
+  12 = Source Code
 
   ----
 
