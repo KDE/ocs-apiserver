@@ -1356,6 +1356,10 @@ class Ocsv1Controller extends Zend_Controller_Action
                 }
             }
         }
+        
+        if (!empty($this->_params['ghns_excluded'])) {
+            $tableProjectSelect->where('project.ghns_excluded = ?', $this->_params['ghns_excluded']);
+        }
 
         if (!empty($this->_params['user'])) {
             $tableProjectSelect->where('member.username = ?', $this->_params['user']);
