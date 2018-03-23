@@ -30,7 +30,7 @@ The following is a sample VHOST you might want to consider for your project.
 </VirtualHost>
 
 
-What changes from official OCS v1 spec
+Added functionality for OCS v1 spec
 ======================================
 
   OCS specification:
