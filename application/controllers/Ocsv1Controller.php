@@ -807,9 +807,12 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function contentcategoriesAction()
     {
+        $store_config = Zend_Registry::get('store_config');
+        $store_id = $store_config['store_id'];
+        
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_content_categories';
+        $cacheName = "api_content_categories" . "_{$store_id}";
 
         if (false == ($categoriesList = $cache->load($cacheName))) {
             $categoriesList = $this->_buildCategories();
