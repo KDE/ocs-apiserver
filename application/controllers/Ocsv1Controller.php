@@ -1501,6 +1501,10 @@ class Ocsv1Controller extends Zend_Controller_Action
             $downloads = $project->count_downloads_hive;
             list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads);
 
+            if (empty($downloadItems)) {
+                continue; // jump to next product
+            }
+
             if ($this->_format == 'json') {
                 $contentsList[] = array(
                         'details'     => 'summary',
