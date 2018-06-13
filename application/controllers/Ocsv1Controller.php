@@ -1335,10 +1335,21 @@ class Ocsv1Controller extends Zend_Controller_Action
                 ), 'project.project_id = package_type.project_id', array());
             }
             */
+            
+            /*
+             * ronald 20180613 package_type is now a tag
             $tableProjectSelect->join(array(
                 'package_type' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM project_package_type WHERE '
                     . $tableProject->getAdapter()->quoteInto('package_type_id IN (?)', $packageTypeList) . ')')
             ), 'project.project_id = package_type.project_id', array());
+             * 
+             */
+            
+            foreach (explode(',', $packageTypeList) as $item) {
+                if ($item && strlen($item) > 2) {
+                    $tableProjectSelect->orWhere('find_in_set(?, package_names)', $item);
+                }
+            }
             
         }
 
