@@ -88,6 +88,29 @@ class Application_Model_Tags
 
         return null;
     }
+    
+    
+    /**
+     * @param int $object_id
+     * @param int $tag_type
+     *
+     * @return string|null
+     */
+    public function getTag($tag_id)
+    {
+        $sql = "
+            SELECT *
+            FROM tag
+            WHERE tag_id = :tag_id
+        ";
+
+        $result = $this->getAdapter()->fetchRow($sql, array('tag_id' => $tag_id));
+        if (isset($result)) {
+            return $result;
+        }
+
+        return null;
+    }
 
     /**
      * @return Zend_Db_Adapter_Abstract

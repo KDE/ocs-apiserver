@@ -1172,7 +1172,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    protected function getPPLoadInfo($project, $pploadApi, $downloads)
+    protected function getPPLoadInfo($project, $pploadApi, $downloads, $fileIds)
     {
         $downloadItems = array();
 
@@ -1187,12 +1187,18 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (false !== ($pploadInfo = $cache->load($cacheName))) {
             return $pploadInfo;
         }
-
+        
+        
         $filesRequest = array(
             'collection_id'     => ltrim($project->ppload_collection_id, '!'),
             'ocs_compatibility' => 'compatible',
             'perpage'           => 100
         );
+        
+        //if filter for fileIds
+        if($fileIds && count($fileIds) > 0) {
+            $filesRequest['ids'] = $fileIds;
+        }
 
         $filesResponse = $pploadApi->getFiles($filesRequest);
         if (isset($filesResponse->status) && $filesResponse->status == 'success') {
@@ -1200,9 +1206,32 @@ class Ocsv1Controller extends Zend_Controller_Action
             foreach ($filesResponse->files as $file) {
                 //create ppload download hash: secret + collection_id + expire-timestamp
                 list($timestamp, $hash) = $this->createDownloadHash($project);
+                $tags = $this->_parseFileTags($file->tags);
+                //collect tags
+                $fileTags = "data##";
+                //$fileTags .= "tags=".$file->tags."##";
+                //mimetype
+                $fileTags .= "mimetype=".$file->type."##";
+                $tagTable = new Application_Model_Tags();
+                
+                if(isset($tags['packagetypeid']) && !empty($tags['packagetypeid'])) {
+                    $packageTypeId = $tags['packagetypeid'];
+                    $tag = $tagTable->getTag($packageTypeId);
+                    if(isset($tag)) {
+                        $fileTags .= "packagetype=".$tag['tag_name'] . "##";
+                    }
+                }
+                if(isset($tags['architectureid']) && !empty($tags['architectureid'])) {
+                    $architectureId = $tags['architectureid'];
+                    $tag = $tagTable->getTag($architectureId);
+                    if(isset($tag)) {
+                        $fileTags .= "architecture=".$tag['tag_name']."##";
+                    }
+                }
+                
 
                 $downloads += (int)$file->downloaded_count;
-                $tags = $this->_parseFileTags($file->tags);
+                
                 $downloadLink =
                     PPLOAD_API_URI . 'files/downloadfile/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
                 $downloadItems['downloadway' . $i] = 1;
@@ -1216,8 +1245,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $downloadItems['downloadpackagename' . $i] = '';
                 $downloadItems['downloadrepository' . $i] = '';
                 $downloadItems['download_package_type' . $i] = $tags['packagetypeid'];
-                $downloadItems['download_package_arch' . $i] = $tags['packagearch'];
-                $downloadItems['downloadtags' . $i] = empty($tags['filetags']) ? '' : implode(',', $tags['filetags']);
+                $downloadItems['download_package_arch' . $i] = $tags['architectureid'];
+                //$downloadItems['downloadtags' . $i] = empty($tags['filetags']) ? '' : implode(',', $tags['filetags']);
+                $downloadItems['downloadtags' . $i] = empty($fileTags) ? '' : $fileTags;
                 $i++;
             }
         }
@@ -1255,6 +1285,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             'link'          => '',
             'licensetype'   => '',
             'packagetypeid' => '',
+            'architectureid' => '',
             'packagearch'   => '',
             'filetags'      => ''
         );
@@ -1266,6 +1297,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $parsedTags['licensetype'] = str_replace('licensetype-', '', $tag);
             } else if (strpos($tag, 'packagetypeid-') === 0) {
                 $parsedTags['packagetypeid'] = str_replace('packagetypeid-', '', $tag);
+            } else if (strpos($tag, 'architectureid-') === 0) {
+                $parsedTags['architectureid'] = str_replace('architectureid-', '', $tag);
             } else if (strpos($tag, 'packagearch-') === 0) {
                 $parsedTags['packagearch'] = str_replace('packagearch-', '', $tag);
             } else if (strpos($tag, '@@@') === 0) {
@@ -1317,41 +1350,27 @@ class Ocsv1Controller extends Zend_Controller_Action
             $xdgTypeList = explode(',', $this->_params['xdg_types']);
             $tableProjectSelect->where('category.xdg_type IN (?)', $xdgTypeList);
         }
+        
 
+        /**
+         * deprecated: we use tags now
         if (!empty($this->_params['package_types'])) {
             // package_types parameter: values separated by ","
-            $packageTypeList = explode(',', $this->_params['package_types']);
+            if( strpos( $this->_params['package_types'], ',' ) !== false) {
+                $packageTypeList = explode(',', $this->_params['package_types']);
+            } else {
+                $packageTypeList = array($this->_params['package_types']);
+            }
 
-            //20180320 ronald: allow filter package_type for all pages
-            /*$storeConfig = Zend_Registry::isRegistered('store_config') ? Zend_Registry::get('store_config') : null;
-            $storePackageTypeIds = null;
-            if ($storeConfig) {
-                $storePackageTypeIds = $storeConfig['package_type'];
+            $select1 = $tableProject->select();
+            foreach($packageTypeList as $item) {
+                $select1->orWhere('find_in_set(?, package_shortnames)', $item);
             }
-            if ($storePackageTypeIds) {
-                $tableProjectSelect->join(array(
-                    'package_type' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM project_package_type WHERE '
-                        . $tableProject->getAdapter()->quoteInto('package_type_id IN (?)', $packageTypeList) . ')')
-                ), 'project.project_id = package_type.project_id', array());
-            }
-            */
-            
-            /*
-             * ronald 20180613 package_type is now a tag
-            $tableProjectSelect->join(array(
-                'package_type' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM project_package_type WHERE '
-                    . $tableProject->getAdapter()->quoteInto('package_type_id IN (?)', $packageTypeList) . ')')
-            ), 'project.project_id = package_type.project_id', array());
-             * 
-             */
-            
-            foreach (explode(',', $packageTypeList) as $item) {
-                if ($item && strlen($item) > 2) {
-                    $tableProjectSelect->orWhere('find_in_set(?, package_names)', $item);
-                }
-            }
+            $tableProjectSelect->where(implode(' ', $select1->getPart('where')));
             
         }
+        *
+        */
 
         $hasSearchPart = false;
         if (false === empty($this->_params['search'])) {
@@ -1364,11 +1383,30 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         if (false === empty($this->_params['tags'])) {
-            foreach (explode(',', $this->_params['tags']) as $item) {
-                if ($item && strlen($item) > 2) {
-                    $tableProjectSelect->orWhere('find_in_set(?, tags)', $item);
-                }
+            // tags parameter: values separated by "," and | for or filter
+            if( strpos( $this->_params['tags'], ',' ) !== false) {
+                $tagList = explode(',', $this->_params['tags']);
+            } else {
+                $tagList = array($this->_params['tags']);
             }
+            
+            $selectAnd = $tableProject->select();
+            foreach($tagList as $item) {
+                if( strpos( $item, '|' ) !== false) {
+                    #or
+                    $selectOr = $tableProject->select();
+                    $tagListOr = explode('|', $item);
+                    foreach($tagListOr as $itemOr) {
+                        $selectOr->orWhere('find_in_set(?, tags)', $itemOr);
+                    }
+                    $selectAnd->where(implode(' ', $selectOr->getPart('where')));
+                } else {
+                    #and
+                    $selectAnd->where('find_in_set(?, tags)', $item);
+                }
+                
+            }
+            $tableProjectSelect->where(implode(' ', $selectAnd->getPart('where')));
         }
         
         if (!empty($this->_params['ghns_excluded'])) {
@@ -1424,8 +1462,10 @@ class Ocsv1Controller extends Zend_Controller_Action
             // page parameter: the first page is 0
             $offset = $limit * $this->_params['page'];
         }
-
+        
         $tableProjectSelect->limit($limit, $offset);
+        
+        //var_dump($tableProjectSelect->__toString());
 
         $projects = $tableProject->fetchAll($tableProjectSelect);
         $count = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
@@ -1513,8 +1553,14 @@ class Ocsv1Controller extends Zend_Controller_Action
             list($previewPics, $smallPreviewPics) = $this->getGalleryPictures($project, $previewPicSize, $smallPreviewPicSize);
 
             $downloads = $project->count_downloads_hive;
-            list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads);
+            
+            //Get Files from OCS-API
+            //get the list of file-ids from tags-filter
+            $fileIds = array();
+            
+            list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads, $fileIds);
 
+            //If no files available, do not show this project
             if (empty($downloadItems)) {
                 continue; // jump to next product
             }
