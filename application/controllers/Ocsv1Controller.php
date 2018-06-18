@@ -807,12 +807,9 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function contentcategoriesAction()
     {
-        $store_config = Zend_Registry::get('store_config');
-        $store_id = $store_config['store_id'];
-        
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = "api_content_categories" . "_{$store_id}";
+        $cacheName = 'api_content_categories';
 
         if (false == ($categoriesList = $cache->load($cacheName))) {
             $categoriesList = $this->_buildCategories();
@@ -1172,7 +1169,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    protected function getPPLoadInfo($project, $pploadApi, $downloads, $fileIds)
+    protected function getPPLoadInfo($project, $pploadApi, $downloads, $fileIds = null)
     {
         $downloadItems = array();
 
@@ -1411,6 +1408,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                 
             }
             $tableProjectSelect->where(implode(' ', $selectAnd->getPart('where')));
+        } else {
+            $selectAndFiles = $tableProject->select();
+            $selectAndFiles->where("1=1"); 
         }
         
         if (!empty($this->_params['ghns_excluded'])) {
