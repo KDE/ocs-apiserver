@@ -88,6 +88,61 @@ class Application_Model_Tags
 
         return null;
     }
+    
+    
+    /**
+     * @param int $object_id
+     * @param int $tag_type
+     *
+     * @return string|null
+     */
+    public function getFilesForTags($object_id, $whereStatement)
+    {
+        $sql = "
+            select * from (
+
+                    SELECT GROUP_CONCAT(tag.tag_name) AS tags, GROUP_CONCAT(tag.tag_id) AS tag_ids,tgo.tag_object_id AS file_id, tgo.tag_parent_object_id As project_id
+                    FROM tag_object AS tgo
+                    JOIN tag ON tag.tag_id = tgo.tag_id
+                    WHERE tag_type_id = 3 #file
+                    AND tgo.is_deleted = 0
+                    GROUP BY tgo.tag_object_id
+
+            ) A
+            where project_id = :project_id 
+        ";
+        $sql .= $whereStatement;
+        //var_dump($sql);
+        $result = $this->getAdapter()->fetchAll($sql, array('project_id' => $object_id));
+        if (isset($result)) {
+            return $result;
+        }
+
+        return null;
+    }
+    
+    
+    /**
+     * @param int $object_id
+     * @param int $tag_type
+     *
+     * @return string|null
+     */
+    public function getTag($tag_id)
+    {
+        $sql = "
+            SELECT *
+            FROM tag
+            WHERE tag_id = :tag_id
+        ";
+
+        $result = $this->getAdapter()->fetchRow($sql, array('tag_id' => $tag_id));
+        if (isset($result)) {
+            return $result;
+        }
+
+        return null;
+    }
 
     /**
      * @return Zend_Db_Adapter_Abstract
