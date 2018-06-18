@@ -1169,7 +1169,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    protected function getPPLoadInfo($project, $pploadApi, $downloads, $fileIds)
+    protected function getPPLoadInfo($project, $pploadApi, $downloads, $fileIds = null)
     {
         $downloadItems = array();
 
@@ -1408,6 +1408,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                 
             }
             $tableProjectSelect->where(implode(' ', $selectAnd->getPart('where')));
+        } else {
+            $selectAndFiles = $tableProject->select();
+            $selectAndFiles->where("1=1"); 
         }
         
         if (!empty($this->_params['ghns_excluded'])) {
