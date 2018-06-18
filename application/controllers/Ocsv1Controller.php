@@ -1390,7 +1390,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $tagList = array($this->_params['tags']);
             }
             
+            //build where statement für projects
             $selectAnd = $tableProject->select();
+            $selectAndFiles = $tableProject->select();
             foreach($tagList as $item) {
                 if( strpos( $item, '|' ) !== false) {
                     #or
@@ -1400,9 +1402,11 @@ class Ocsv1Controller extends Zend_Controller_Action
                         $selectOr->orWhere('find_in_set(?, tags)', $itemOr);
                     }
                     $selectAnd->where(implode(' ', $selectOr->getPart('where')));
+                    $selectAndFiles->orWhere(implode(' ', $selectOr->getPart('where')));
                 } else {
                     #and
                     $selectAnd->where('find_in_set(?, tags)', $item);
+                    $selectAndFiles->orWhere('find_in_set(?, tags)', $item);
                 }
                 
             }
@@ -1506,7 +1510,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         if (false == $contentsList) {
-            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects);
+            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
             if (false === $hasSearchPart) {
                 $cache->save($contentsList, $cacheName, array(), 1800);
             }
@@ -1531,10 +1535,11 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    protected function _buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects)
+    protected function _buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, $selectWhereString)
     {
         $contentsList = array();
         $helperTruncate = new Application_View_Helper_Truncate();
+        $selectWhereString = ' AND ' . $selectWhereString;
         foreach ($projects as $project) {
             $project->description =
                 $helperTruncate->truncate(Application_Model_BBCode::renderHtml(Application_Model_HtmlPurify::purify($project->description)),
@@ -1556,7 +1561,15 @@ class Ocsv1Controller extends Zend_Controller_Action
             
             //Get Files from OCS-API
             //get the list of file-ids from tags-filter
-            $fileIds = array();
+            $fileIds = "";
+            $tableTags = new Application_Model_Tags();
+            $filesList = $tableTags->getFilesForTags($project->project_id, $selectWhereString);
+            
+            foreach ($filesList as $file) {
+                $fileIds .= $file['file_id'].','; 
+            }
+            
+            //var_dump($fileIds);
             
             list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads, $fileIds);
 
