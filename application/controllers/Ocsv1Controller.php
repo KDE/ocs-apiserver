@@ -1164,6 +1164,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @param Zend_Db_Table_Row_Abstract $project
      * @param Ppload_Api                 $pploadApi
      * @param int                        $downloads
+     * @param string                     $fileIds
      *
      * @return array
      * @throws Zend_Cache_Exception
@@ -1180,6 +1181,10 @@ class Ocsv1Controller extends Zend_Controller_Action
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $cacheName = 'api_ppload_collection_by_id_' . $project->ppload_collection_id;
+        
+        if($fileIds && count($fileIds) > 0) {
+            $cacheName .=  '_' . md5($fileIds);
+        }
 
         if (false !== ($pploadInfo = $cache->load($cacheName))) {
             return $pploadInfo;
@@ -1390,20 +1395,32 @@ class Ocsv1Controller extends Zend_Controller_Action
             //build where statement für projects
             $selectAnd = $tableProject->select();
             $selectAndFiles = $tableProject->select();
+            
+            $tableTags = new Application_Model_Tags();
+            $possibleFileTags = $tableTags->fetchAllFileTagNamesAsArray();
+            
             foreach($tagList as $item) {
                 if( strpos( $item, '|' ) !== false) {
                     #or
                     $selectOr = $tableProject->select();
+                    $selectOrFiles = $tableProject->select();
                     $tagListOr = explode('|', $item);
                     foreach($tagListOr as $itemOr) {
                         $selectOr->orWhere('find_in_set(?, tags)', $itemOr);
+                        if (in_array($itemOr, $possibleFileTags)) {
+                            $selectOrFiles->orWhere('find_in_set(?, tags)', $itemOr);
+                        }
                     }
                     $selectAnd->where(implode(' ', $selectOr->getPart('where')));
-                    $selectAndFiles->orWhere(implode(' ', $selectOr->getPart('where')));
+                    
+                    $selectAndFiles->where(implode(' ', $selectOrFiles->getPart('where')));
                 } else {
                     #and
                     $selectAnd->where('find_in_set(?, tags)', $item);
-                    $selectAndFiles->orWhere('find_in_set(?, tags)', $item);
+                    if (in_array($item, $possibleFileTags)) {
+                        $selectAndFiles->where('find_in_set(?, tags)', $item);
+                    }
+                    
                 }
                 
             }
@@ -1502,13 +1519,13 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString());
+        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString());
         $contentsList = false;
 
         if (false === $hasSearchPart) {
             $contentsList = $cache->load($cacheName);
         }
-
+        
         if (false == $contentsList) {
             $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
             if (false === $hasSearchPart) {
@@ -1563,7 +1580,14 @@ class Ocsv1Controller extends Zend_Controller_Action
             //get the list of file-ids from tags-filter
             $fileIds = "";
             $tableTags = new Application_Model_Tags();
+            
             $filesList = $tableTags->getFilesForTags($project->project_id, $selectWhereString);
+            
+            //if there is a tag filter and we havot found any files, skip this project
+            if($selectWhereString <> ' AND (1=1)' && (empty($filesList) || count($filesList) == 0)) {
+                //echo "No files found for project ".$project->project_id;
+                continue;
+            }
             
             foreach ($filesList as $file) {
                 $fileIds .= $file['file_id'].','; 
