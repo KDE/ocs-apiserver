@@ -91,8 +91,34 @@ class Application_Model_Tags
     
     
     /**
-     * @param int $object_id
-     * @param int $tag_type
+     * @return array|null
+     */
+    public function fetchAllFileTagNamesAsArray()
+    {
+        $sql = "
+            select t.tag_name from tag t
+            join tag_group_item tgi on tgi.tag_id = t.tag_id
+            join tag_group tg on tg.group_id = tgi.tag_group_id
+            where tgi.tag_group_id in (8,9)
+
+        ";
+
+        $result = $this->getAdapter()->fetchAll($sql);
+        $returnArray = array();
+        if (isset($result)) {
+            foreach ($result as $tag) {
+                $returnArray[] = $tag['tag_name'];
+            }
+            return $returnArray;
+        }
+
+        return null;
+    }
+    
+    
+    /**
+     * @param int $object_id ProjectId
+     * @param int $whereStatement SQl-Where-Statement
      *
      * @return string|null
      */
@@ -112,7 +138,9 @@ class Application_Model_Tags
             where project_id = :project_id 
         ";
         $sql .= $whereStatement;
+        
         //var_dump($sql);
+        
         $result = $this->getAdapter()->fetchAll($sql, array('project_id' => $object_id));
         if (isset($result)) {
             return $result;
