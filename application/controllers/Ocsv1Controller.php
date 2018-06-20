@@ -1231,6 +1231,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                     }
                 }
                 
+                $fileTags = rtrim($fileTags,",");
+                
 
                 $downloads += (int)$file->downloaded_count;
                 
