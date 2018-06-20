@@ -1210,24 +1210,24 @@ class Ocsv1Controller extends Zend_Controller_Action
                 list($timestamp, $hash) = $this->createDownloadHash($project);
                 $tags = $this->_parseFileTags($file->tags);
                 //collect tags
-                $fileTags = "data##";
+                $fileTags = "";
                 //$fileTags .= "tags=".$file->tags."##";
                 //mimetype
-                $fileTags .= "mimetype=".$file->type."##";
+                $fileTags .= "data##mimetype=".$file->type.",";
                 $tagTable = new Application_Model_Tags();
                 
                 if(isset($tags['packagetypeid']) && !empty($tags['packagetypeid'])) {
                     $packageTypeId = $tags['packagetypeid'];
                     $tag = $tagTable->getTag($packageTypeId);
                     if(isset($tag)) {
-                        $fileTags .= "packagetype=".$tag['tag_name'] . "##";
+                        $fileTags .= "application##packagetype=".$tag['tag_name'] . ",";
                     }
                 }
                 if(isset($tags['architectureid']) && !empty($tags['architectureid'])) {
                     $architectureId = $tags['architectureid'];
                     $tag = $tagTable->getTag($architectureId);
                     if(isset($tag)) {
-                        $fileTags .= "architecture=".$tag['tag_name']."##";
+                        $fileTags .= "application##architecture=".$tag['tag_name'].",";
                     }
                 }
                 
