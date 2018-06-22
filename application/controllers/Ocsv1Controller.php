@@ -911,6 +911,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             'width'  => 100,
             'height' => 100
         );
+        
+        $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
 
         // Specific content data
         $requestedId = (int)$this->getParam('content_id') ? (int)$this->getParam('content_id') : null;
@@ -920,7 +922,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $this->_sendResponse($response, $this->_format);
         } // Gets a list of a specific set of contents
         else {
-            $response = $this->fetchCategoryContent($previewPicSize, $smallPreviewPicSize, $pploadApi);
+            $response = $this->fetchCategoryContent($previewPicSize, $smallPreviewPicSize, $pploadApi, $debugMode);
 
             $this->_sendResponse($response, $this->_format);
         }
@@ -1110,9 +1112,11 @@ class Ocsv1Controller extends Zend_Controller_Action
             'member_username' => 'username',
             'category_title'  => 'cat_title',
             'xdg_type'        => 'cat_xdg_type',
-            'name_legacy'     => 'cat_name_legacy'
+            'name_legacy'     => 'cat_name_legacy',
+            new Zend_Db_Expr("(select count(1) as num_files from ppload.ppload_files f where f.active = 1 and f.collection_id = project.ppload_collection_id group by f.collection_id) as num_files")
         ))->where('project.status = ?', Application_Model_Project::PROJECT_ACTIVE)->where('project.ppload_collection_id IS NOT NULL')
         ;
+        $tableProjectSelect->having('num_files > 0');
 
         return $tableProjectSelect;
     }
@@ -1318,6 +1322,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @param array      $previewPicSize
      * @param array      $smallPreviewPicSize
      * @param Ppload_Api $pploadApi
+     * @param boolean    $debugMode Is debug mode
      *
      * @return array
      * @throws Zend_Cache_Exception
@@ -1327,7 +1332,8 @@ class Ocsv1Controller extends Zend_Controller_Action
     protected function fetchCategoryContent(
         $previewPicSize,
         $smallPreviewPicSize,
-        $pploadApi
+        $pploadApi,
+        $debugMode
     ) {
         $limit = 10; // 1 - 100
         $offset = 0;
@@ -1515,6 +1521,11 @@ class Ocsv1Controller extends Zend_Controller_Action
             );
         }
 
+        if($debugMode) {
+           $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
+           $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
+        }
+        
         if (!count($projects)) {
             return $response;
         }
@@ -1534,6 +1545,12 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $cache->save($contentsList, $cacheName, array(), 1800);
             }
         }
+        
+        if($debugMode) {
+           $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
+           $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
+        }
+
 
         if ($this->_format == 'json') {
             $response['data'] = $contentsList;
