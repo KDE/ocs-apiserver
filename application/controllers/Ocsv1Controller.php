@@ -809,7 +809,11 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_content_categories';
+        $cacheName = 'api_content_categories'.$this->_getNameForStoreClient();
+        
+        $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
+        
+        
 
         if (false == ($categoriesList = $cache->load($cacheName))) {
             $categoriesList = $this->_buildCategories();
@@ -840,6 +844,11 @@ class Ocsv1Controller extends Zend_Controller_Action
             if (!empty($categoriesList)) {
                 $response['data'] = array('category' => $categoriesList);
             }
+        }
+        
+        if($debugMode) {
+            $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
+            $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
         }
 
         $this->_sendResponse($response, $this->_format);
