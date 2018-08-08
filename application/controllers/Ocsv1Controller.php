@@ -811,6 +811,8 @@ class Ocsv1Controller extends Zend_Controller_Action
         $cache = Zend_Registry::get('cache');
         $cacheName = 'api_content_categories';
 
+
+
         if (false == ($categoriesList = $cache->load($cacheName))) {
             $categoriesList = $this->_buildCategories();
             $cache->save($categoriesList, $cacheName, array(), 1800);
@@ -911,7 +913,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             'width'  => 100,
             'height' => 100
         );
-        
+
         $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
 
         // Specific content data
@@ -1185,7 +1187,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $cacheName = 'api_ppload_collection_by_id_' . $project->ppload_collection_id;
-        
+
         if($fileIds && count($fileIds) > 0) {
             $cacheName .=  '_' . md5($fileIds);
         }
@@ -1193,14 +1195,14 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (false !== ($pploadInfo = $cache->load($cacheName))) {
             return $pploadInfo;
         }
-        
-        
+
+
         $filesRequest = array(
             'collection_id'     => ltrim($project->ppload_collection_id, '!'),
             'ocs_compatibility' => 'compatible',
             'perpage'           => 100
         );
-        
+
         //if filter for fileIds
         if($fileIds && count($fileIds) > 0) {
             $filesRequest['ids'] = $fileIds;
@@ -1219,7 +1221,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 //mimetype
                 $fileTags .= "data##mimetype=".$file->type.",";
                 $tagTable = new Application_Model_Tags();
-                
+
                 if(isset($tags['packagetypeid']) && !empty($tags['packagetypeid'])) {
                     $packageTypeId = $tags['packagetypeid'];
                     $tag = $tagTable->getTag($packageTypeId);
@@ -1234,14 +1236,14 @@ class Ocsv1Controller extends Zend_Controller_Action
                         $fileTags .= "application##architecture=".$tag['tag_name'].",";
                     }
                 }
-                
+
                 $fileTags = rtrim($fileTags,",");
-                
+
 
                 $downloads += (int)$file->downloaded_count;
-                
+
                 $downloadLink =
-                    PPLOAD_API_URI . 'files/downloadfile/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
+                    PPLOAD_API_URI . 'files/download/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
                 $downloadItems['downloadway' . $i] = 1;
                 $downloadItems['downloadtype' . $i] = '';
                 $downloadItems['downloadprice' . $i] = '0';
@@ -1360,7 +1362,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $xdgTypeList = explode(',', $this->_params['xdg_types']);
             $tableProjectSelect->where('category.xdg_type IN (?)', $xdgTypeList);
         }
-        
+
 
         /**
          * deprecated: we use tags now
@@ -1377,7 +1379,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $select1->orWhere('find_in_set(?, package_shortnames)', $item);
             }
             $tableProjectSelect->where(implode(' ', $select1->getPart('where')));
-            
+
         }
         *
         */
@@ -1399,14 +1401,14 @@ class Ocsv1Controller extends Zend_Controller_Action
             } else {
                 $tagList = array($this->_params['tags']);
             }
-            
+
             //build where statement für projects
             $selectAnd = $tableProject->select();
             $selectAndFiles = $tableProject->select();
-            
+
             $tableTags = new Application_Model_Tags();
             $possibleFileTags = $tableTags->fetchAllFileTagNamesAsArray();
-            
+
             foreach($tagList as $item) {
                 if( strpos( $item, '|' ) !== false) {
                     #or
@@ -1420,7 +1422,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         }
                     }
                     $selectAnd->where(implode(' ', $selectOr->getPart('where')));
-                    
+
                     $selectAndFiles->where(implode(' ', $selectOrFiles->getPart('where')));
                 } else {
                     #and
@@ -1428,16 +1430,16 @@ class Ocsv1Controller extends Zend_Controller_Action
                     if (in_array($item, $possibleFileTags)) {
                         $selectAndFiles->where('find_in_set(?, tags)', $item);
                     }
-                    
+
                 }
-                
+
             }
             $tableProjectSelect->where(implode(' ', $selectAnd->getPart('where')));
         } else {
             $selectAndFiles = $tableProject->select();
-            $selectAndFiles->where("1=1"); 
+            $selectAndFiles->where("1=1");
         }
-        
+
         if (!empty($this->_params['ghns_excluded'])) {
             $tableProjectSelect->where('project.ghns_excluded = ?', $this->_params['ghns_excluded']);
         }
@@ -1491,9 +1493,9 @@ class Ocsv1Controller extends Zend_Controller_Action
             // page parameter: the first page is 0
             $offset = $limit * $this->_params['page'];
         }
-        
+
         $tableProjectSelect->limit($limit, $offset);
-        
+
         //var_dump($tableProjectSelect->__toString());
 
         $projects = $tableProject->fetchAll($tableProjectSelect);
@@ -1525,7 +1527,7 @@ class Ocsv1Controller extends Zend_Controller_Action
            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
         }
-        
+
         if (!count($projects)) {
             return $response;
         }
@@ -1538,14 +1540,14 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (false === $hasSearchPart) {
             $contentsList = $cache->load($cacheName);
         }
-        
+
         if (false == $contentsList) {
             $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
             if (false === $hasSearchPart) {
                 $cache->save($contentsList, $cacheName, array(), 1800);
             }
         }
-        
+
         if($debugMode) {
            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
@@ -1594,26 +1596,26 @@ class Ocsv1Controller extends Zend_Controller_Action
             list($previewPics, $smallPreviewPics) = $this->getGalleryPictures($project, $previewPicSize, $smallPreviewPicSize);
 
             $downloads = $project->count_downloads_hive;
-            
+
             //Get Files from OCS-API
             //get the list of file-ids from tags-filter
             $fileIds = "";
             $tableTags = new Application_Model_Tags();
-            
+
             $filesList = $tableTags->getFilesForTags($project->project_id, $selectWhereString);
-            
+
             //if there is a tag filter and we havot found any files, skip this project
             if($selectWhereString <> ' AND (1=1)' && (empty($filesList) || count($filesList) == 0)) {
                 //echo "No files found for project ".$project->project_id;
                 continue;
             }
-            
+
             foreach ($filesList as $file) {
-                $fileIds .= $file['file_id'].','; 
+                $fileIds .= $file['file_id'].',';
             }
-            
+
             //var_dump($fileIds);
-            
+
             list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads, $fileIds);
 
             //If no files available, do not show this project
@@ -1731,7 +1733,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $tags = $this->_parseFileTags($file->tags);
         $downloadLink =
-            PPLOAD_API_URI . 'files/downloadfile/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
+            PPLOAD_API_URI . 'files/download/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
 
         if ($this->_format == 'json') {
             $response = array(
