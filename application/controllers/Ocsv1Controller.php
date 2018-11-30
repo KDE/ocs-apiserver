@@ -1485,9 +1485,10 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $tableProjectSelect->order('stat_downloads_quarter_year.amount DESC');
                      * 
                      */
-                    $tableProjectSelect->joinLeft(array('stat_downloads_24h_v' => 'stat_downloads_24h'),
+                    $tableProjectSelect->joinLeft(array('stat_downloads_24h' => 'stat_downloads_24h_v'),
                         'project.ppload_collection_id = stat_downloads_24h.collection_id', array());
-                    $tableProjectSelect->order('stat_downloads_24h.anz DESC');
+                    $tableProjectSelect->order('stat_downloads_24h.amount DESC');
+                    $tableProjectSelect->order('project.created_at DESC');
                     
                     break;
                 default:
