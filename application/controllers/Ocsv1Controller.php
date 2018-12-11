@@ -1473,17 +1473,18 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $tableProjectSelect->order(new Zend_Db_Expr('laplace_score(project.count_likes,project.count_dislikes) DESC'));
                     break;
                 case 'down':
-                    /**
+                    
                     $tableProjectSelect->joinLeft(array('stat_downloads_quarter_year' => 'stat_downloads_quarter_year'),
                         'project.project_id = stat_downloads_quarter_year.project_id', array());
                     $tableProjectSelect->order('stat_downloads_quarter_year.amount DESC');
-                     * 
-                     */
+                     
+                    /**
                     $tableProjectSelect->joinLeft(array('stat_downloads_24h' => 'stat_downloads_24h_v'),
                         'project.ppload_collection_id = stat_downloads_24h.collection_id', array());
                     $tableProjectSelect->order('stat_downloads_24h.amount DESC');
                     $tableProjectSelect->order('project.created_at DESC');
-                    
+                    * 
+                     */
                     break;
                 default:
                     break;
