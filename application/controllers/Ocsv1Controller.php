@@ -918,7 +918,8 @@ class Ocsv1Controller extends Zend_Controller_Action
         );
         $smallPreviewPicSize = array(
             'width'  => 100,
-            'height' => 100
+            'height' => 100,
+            'crop'   => 0
         );
 
         $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
