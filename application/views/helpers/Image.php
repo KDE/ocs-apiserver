@@ -60,7 +60,7 @@ class Application_View_Helper_Image extends Zend_View_Helper_Abstract
         }
 
         if ($filename == "") {
-            $filename = 'default.png';
+            $filename = 'default-ocs.png';
         }
 
         if (isset($options['temporal'])) {
