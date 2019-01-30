@@ -1565,7 +1565,8 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString());
+        $storeName = Zend_Registry::get('store_config')->name;
+        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString(). '_' . $storeName);
         $contentsList = false;
 
         if (false === $hasSearchPart) {
