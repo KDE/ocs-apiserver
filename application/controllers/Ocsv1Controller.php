@@ -1351,6 +1351,15 @@ class Ocsv1Controller extends Zend_Controller_Action
         $tableProject = new Application_Model_Project();
         $tableProjectSelect = $this->_buildProjectSelect($tableProject, true);
 
+        $storeTags = Zend_Registry::isRegistered('config_store_tags') ? Zend_Registry::get('config_store_tags') : null;
+
+        if ($storeTags) {
+            $tableProjectSelect->join(array(
+                'tags' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM stat_project_tagids WHERE tag_id in ('
+                    . implode(',', $storeTags) . '))')
+            ), 'project.project_id = tags.project_id', array());
+        }
+
         if (false === empty($this->_params['categories'])) {
             // categories parameter: values separated by ","
             // legacy OCS API compatible: values separated by "x"
@@ -1440,7 +1449,6 @@ class Ocsv1Controller extends Zend_Controller_Action
                     } else {
                         $selectAndFiles->where("1=1");
                     }
-
                 }
 
             }
