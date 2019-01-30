@@ -1437,6 +1437,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $selectAnd->where('find_in_set(?, tags)', $item);
                     if (in_array($item, $possibleFileTags)) {
                         $selectAndFiles->where('find_in_set(?, tags)', $item);
+                    } else {
+                        $selectAndFiles->where("1=1");
                     }
 
                 }
