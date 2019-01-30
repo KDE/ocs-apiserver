@@ -1553,6 +1553,11 @@ class Ocsv1Controller extends Zend_Controller_Action
            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
         }
+        
+        if($debugMode) {
+            $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
+            $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
+        }
 
         if (!count($projects)) {
             return $response;
