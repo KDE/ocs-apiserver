@@ -189,7 +189,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $baseUri = $this->_uriScheme . '://' . $credentials . $_SERVER['SERVER_NAME'];
 
-        $webSite = 'www.opendesktop.org';
+        $webSite = Zend_Registry::isRegistered('store_host') ? Zend_Registry::get('store_host') : 'www.opendesktop.org';
 
         //Mask api.kde-look.org to store.kde.org
         if (strpos($_SERVER['SERVER_NAME'], 'api.kde-look.org') !== false) {
@@ -1566,7 +1566,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $storeName = Zend_Registry::get('store_config')->name;
-        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString(). '_' . $storeName);
+        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName);
         $contentsList = false;
 
         if (false === $hasSearchPart) {
