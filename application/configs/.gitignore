@@ -1,0 +1,7 @@
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+!application.ini
+!client.ini.php
+!default.ini.php

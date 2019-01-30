@@ -44,7 +44,8 @@ class ErrorController extends Zend_Controller_Action
         
         $request   = $errors->request;
 
-        echo json_encode(array($message,$request));
+        $this->getResponse()->setHttpResponseCode(500);
+        $this->getResponse()->setBody(json_encode(array($message,$errors)));
     }
 
     /**

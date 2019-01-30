@@ -87,7 +87,7 @@ class Application_Model_ProjectCategory
     public function fetchCategoryTreeCurrentStore($clearCache = false)
     {
         $store_config = Zend_Registry::get('store_config');
-        $store_id = $store_config['store_id'];
+        $store_id = $store_config->store_id;
 
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
