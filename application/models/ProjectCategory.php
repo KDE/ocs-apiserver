@@ -134,14 +134,16 @@ class Application_Model_ProjectCategory
         } else {
             $store_config = Zend_Registry::isRegistered('store_config') ? Zend_Registry::get('store_config') : null;
         }
-        $storePackageTypeIds = (false === empty($store_config['package_type'])) ? $store_config['package_type'] : null;
+        //$storePackageTypeIds = (false === empty($store_config['package_type'])) ? $store_config['package_type'] : null;
+        $storePackageTypeIds = null;
+        
 
         if ($storePackageTypeIds) {
             $sql =
                 "SELECT count_product FROM stat_cat_prod_count WHERE project_category_id = :cat_id AND package_type_id = :package_id";
             $bind = array('cat_id' => $cat_id, 'package_id' => $storePackageTypeIds);
         } else {
-            $sql = "SELECT count_product FROM stat_cat_prod_count WHERE project_category_id = :cat_id AND package_type_id IS NULL";
+            $sql = "SELECT count_product FROM stat_cat_prod_count WHERE project_category_id = :cat_id AND tag_id IS NULL";
             $bind = array('cat_id' => $cat_id);
         }
 
