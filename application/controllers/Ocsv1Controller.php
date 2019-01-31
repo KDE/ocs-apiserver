@@ -1364,28 +1364,29 @@ class Ocsv1Controller extends Zend_Controller_Action
          */
         
         if ($storeTags) {
-            $tagList = implode(',', $storeTags);
-
+            $tagList = $storeTags;
             //build where statement für projects
             $selectAnd = $tableProject->select();
             $selectAndFiles = $tableProject->select();
-
+            
             $tableTags = new Application_Model_Tags();
             $possibleFileTags = $tableTags->fetchAllFileTagNamesAsArray();
 
+            if(!is_array($tagList)) {
+                $tagList = array($tagList);
+            }
+            
             foreach($tagList as $item) {
                 #and
-                $selectAnd->where('find_in_set(?, tags)', $item);
+                $selectAnd->where('find_in_set(?, tag_ids)', $item);
                 if (in_array($item, $possibleFileTags)) {
-                    $selectAndFiles->where('find_in_set(?, tags)', $item);
+                    $selectAndFiles->where('find_in_set(?, tag_ids)', $item);
                 } else {
                     $selectAndFiles->where("1=1");
                 }
             }
             $tableProjectSelect->where(implode(' ', $selectAnd->getPart('where')));
         }
-        
-        
 
         if (false === empty($this->_params['categories'])) {
             // categories parameter: values separated by ","
