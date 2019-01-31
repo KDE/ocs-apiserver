@@ -1550,17 +1550,41 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $tableProjectSelect->limit($limit, $offset);
 
-        //var_dump($tableProjectSelect->__toString());
 
-        $projects = $tableProject->fetchAll($tableProjectSelect);
-        $count = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
+        /** @var Zend_Cache_Core $cache */
+        $cache = Zend_Registry::get('cache');
+        $storeName = Zend_Registry::get('store_config')->name;
+        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName);
+        $cacheNameCount = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName) . '_count';
+        $contentsList = false;
+        $count = 0;
 
+        if (false === $hasSearchPart) {
+            $contentsList = $cache->load($cacheName);
+            $count = $cache->load($cacheNameCount);
+        }
+
+        if (false == $contentsList) {
+            $projects = $tableProject->fetchAll($tableProjectSelect);
+            $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
+            $count = $counter['counter'];
+            
+            if (!count($projects)) {
+                return $response;
+            }
+            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
+            if (false === $hasSearchPart) {
+                $cache->save($contentsList, $cacheName, array(), 1800);
+                $cache->save($count, $cacheNameCount, array(), 1800);
+            }
+        }
+        
         if ($this->_format == 'json') {
             $response = array(
                 'status'       => 'ok',
                 'statuscode'   => 100,
                 'message'      => '',
-                'totalitems'   => $count['counter'],
+                'totalitems'   => $count,
                 'itemsperpage' => $limit,
                 'data'         => array()
             );
@@ -1570,7 +1594,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'status'       => array('@text' => 'ok'),
                     'statuscode'   => array('@text' => 100),
                     'message'      => array('@text' => ''),
-                    'totalitems'   => array('@text' => $count['counter']),
+                    'totalitems'   => array('@text' => $count),
                     'itemsperpage' => array('@text' => $limit)
                 ),
                 'data' => array()
@@ -1585,27 +1609,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         if($debugMode) {
             $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
-        }
-
-        if (!count($projects)) {
-            return $response;
-        }
-
-        /** @var Zend_Cache_Core $cache */
-        $cache = Zend_Registry::get('cache');
-        $storeName = Zend_Registry::get('store_config')->name;
-        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName);
-        $contentsList = false;
-
-        if (false === $hasSearchPart) {
-            $contentsList = $cache->load($cacheName);
-        }
-
-        if (false == $contentsList) {
-            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
-            if (false === $hasSearchPart) {
-                $cache->save($contentsList, $cacheName, array(), 1800);
-            }
         }
 
         if($debugMode) {
