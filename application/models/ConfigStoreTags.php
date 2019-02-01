@@ -1,10 +1,11 @@
 <?php
+
 /**
- *  ocs-apiserver
+ *  ocs-webserver
  *
  *  Copyright 2016 by pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ *    This file is part of ocs-webserver.
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Affero General Public License as
@@ -18,22 +19,31 @@
  *
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
-class Application_Model_DbRowset_PlingProjectUpdate extends Zend_Db_Table_Rowset_Abstract
+ *
+ * Created: 23.01.2019
+ */
+class Application_Model_ConfigStoreTags
 {
 
-    public function getCommentsForUpdate($updateId)
+    /**
+     * @param int  $store_id
+     * @param bool $onlyActive
+     *
+     * @return null|array
+     */
+    public function getTagsAsIdForStore($store_id, $onlyActive = true)
     {
+        $modelConfigStoreTags = new Application_Model_DbTable_ConfigStoreTags();
 
-        $retArr = array();
+        $sql = "SELECT `tag_id` FROM `config_store_tag` WHERE `store_id` = :store_id AND `is_active` = :active ORDER BY `tag_id`;";
 
-        foreach ($this as $row) {
-            if ($row->project_update_id == $updateId) {
-                $retArr[] = $row;
-            }
+        $result = $modelConfigStoreTags->getAdapter()->fetchAll($sql, array('store_id' => $store_id, 'active' => ($onlyActive ? 1 : 0)), Zend_Db::FETCH_COLUMN);
+
+        if (0 == count($result)) {
+            return null;
         }
 
-        return $retArr;
+        return $result;
     }
 
 }

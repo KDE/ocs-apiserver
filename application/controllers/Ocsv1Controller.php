@@ -189,7 +189,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $baseUri = $this->_uriScheme . '://' . $credentials . $_SERVER['SERVER_NAME'];
 
-        $webSite = 'www.opendesktop.org';
+        $webSite = Zend_Registry::isRegistered('store_host') ? Zend_Registry::get('store_host') : 'www.opendesktop.org';
 
         //Mask api.kde-look.org to store.kde.org
         if (strpos($_SERVER['SERVER_NAME'], 'api.kde-look.org') !== false) {
@@ -809,7 +809,9 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_content_categories';
+        $cacheName = 'api_content_categories'.$this->_getNameForStoreClient();
+
+        $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
 
 
 
@@ -842,6 +844,11 @@ class Ocsv1Controller extends Zend_Controller_Action
             if (!empty($categoriesList)) {
                 $response['data'] = array('category' => $categoriesList);
             }
+        }
+
+        if($debugMode) {
+            $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
+            $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
         }
 
         $this->_sendResponse($response, $this->_format);
@@ -1344,6 +1351,43 @@ class Ocsv1Controller extends Zend_Controller_Action
         $tableProject = new Application_Model_Project();
         $tableProjectSelect = $this->_buildProjectSelect($tableProject, true);
 
+        $storeTags = Zend_Registry::isRegistered('config_store_tags') ? Zend_Registry::get('config_store_tags') : null;
+
+        /*
+        if ($storeTags) {
+            $tableProjectSelect->join(array(
+                'tags' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM stat_project_tagids WHERE tag_id in ('
+                    . implode(',', $storeTags) . '))')
+            ), 'project.project_id = tags.project_id', array());
+        }
+         * 
+         */
+        
+        if ($storeTags) {
+            $tagList = $storeTags;
+            //build where statement für projects
+            $selectAnd = $tableProject->select();
+            $selectAndFiles = $tableProject->select();
+            
+            $tableTags = new Application_Model_Tags();
+            $possibleFileTags = $tableTags->fetchAllFileTagNamesAsArray();
+
+            if(!is_array($tagList)) {
+                $tagList = array($tagList);
+            }
+            
+            foreach($tagList as $item) {
+                #and
+                $selectAnd->where('find_in_set(?, tag_ids)', $item);
+                if (in_array($item, $possibleFileTags)) {
+                    $selectAndFiles->where('find_in_set(?, tag_ids)', $item);
+                } else {
+                    $selectAndFiles->where("1=1");
+                }
+            }
+            $tableProjectSelect->where(implode(' ', $selectAnd->getPart('where')));
+        }
+
         if (false === empty($this->_params['categories'])) {
             // categories parameter: values separated by ","
             // legacy OCS API compatible: values separated by "x"
@@ -1430,8 +1474,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $selectAnd->where('find_in_set(?, tags)', $item);
                     if (in_array($item, $possibleFileTags)) {
                         $selectAndFiles->where('find_in_set(?, tags)', $item);
+                    } else {
+                        $selectAndFiles->where("1=1");
                     }
-
                 }
 
             }
@@ -1473,18 +1518,17 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $tableProjectSelect->order(new Zend_Db_Expr('laplace_score(project.count_likes,project.count_dislikes) DESC'));
                     break;
                 case 'down':
-                    
+                    /**
                     $tableProjectSelect->joinLeft(array('stat_downloads_quarter_year' => 'stat_downloads_quarter_year'),
                         'project.project_id = stat_downloads_quarter_year.project_id', array());
                     $tableProjectSelect->order('stat_downloads_quarter_year.amount DESC');
-                     
-                    /**
+                     * 
+                     */
                     $tableProjectSelect->joinLeft(array('stat_downloads_24h' => 'stat_downloads_24h_v'),
                         'project.ppload_collection_id = stat_downloads_24h.collection_id', array());
                     $tableProjectSelect->order('stat_downloads_24h.amount DESC');
                     $tableProjectSelect->order('project.created_at DESC');
-                    * 
-                     */
+                    
                     break;
                 default:
                     break;
@@ -1506,17 +1550,62 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $tableProjectSelect->limit($limit, $offset);
 
-        //var_dump($tableProjectSelect->__toString());
 
-        $projects = $tableProject->fetchAll($tableProjectSelect);
-        $count = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
+        /** @var Zend_Cache_Core $cache */
+        $cache = Zend_Registry::get('cache');
+        $storeName = Zend_Registry::get('store_config')->name;
+        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName);
+        $cacheNameCount = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName) . '_count';
+        $contentsList = false;
+        $count = 0;
 
+        if (false === $hasSearchPart) {
+            $contentsList = $cache->load($cacheName);
+            $count = $cache->load($cacheNameCount);
+        }
+
+        if (false == $contentsList) {
+            $projects = $tableProject->fetchAll($tableProjectSelect);
+            $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
+            $count = $counter['counter'];
+            
+            if (!count($projects)) {
+                if ($this->_format == 'json') {
+                    $response = array(
+                        'status'       => 'ok',
+                        'statuscode'   => 100,
+                        'message'      => '',
+                        'totalitems'   => $count,
+                        'itemsperpage' => $limit,
+                        'data'         => array()
+                    );
+                } else {
+                    $response = array(
+                        'meta' => array(
+                            'status'       => array('@text' => 'ok'),
+                            'statuscode'   => array('@text' => 100),
+                            'message'      => array('@text' => ''),
+                            'totalitems'   => array('@text' => $count),
+                            'itemsperpage' => array('@text' => $limit)
+                        ),
+                        'data' => array()
+                    );
+                }
+                return $response;
+            }
+            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
+            if (false === $hasSearchPart) {
+                $cache->save($contentsList, $cacheName, array(), 1800);
+                $cache->save($count, $cacheNameCount, array(), 1800);
+            }
+        }
+        
         if ($this->_format == 'json') {
             $response = array(
                 'status'       => 'ok',
                 'statuscode'   => 100,
                 'message'      => '',
-                'totalitems'   => $count['counter'],
+                'totalitems'   => $count,
                 'itemsperpage' => $limit,
                 'data'         => array()
             );
@@ -1526,7 +1615,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'status'       => array('@text' => 'ok'),
                     'statuscode'   => array('@text' => 100),
                     'message'      => array('@text' => ''),
-                    'totalitems'   => array('@text' => $count['counter']),
+                    'totalitems'   => array('@text' => $count),
                     'itemsperpage' => array('@text' => $limit)
                 ),
                 'data' => array()
@@ -1537,25 +1626,10 @@ class Ocsv1Controller extends Zend_Controller_Action
            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
         }
-
-        if (!count($projects)) {
-            return $response;
-        }
-
-        /** @var Zend_Cache_Core $cache */
-        $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString());
-        $contentsList = false;
-
-        if (false === $hasSearchPart) {
-            $contentsList = $cache->load($cacheName);
-        }
-
-        if (false == $contentsList) {
-            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
-            if (false === $hasSearchPart) {
-                $cache->save($contentsList, $cacheName, array(), 1800);
-            }
+        
+        if($debugMode) {
+            $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
+            $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
         }
 
         if($debugMode) {
@@ -1931,6 +2005,11 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         return $commentList;
+    }
+
+    public function voteAction()
+    {
+        $this->_sendErrorResponse(405, "method not allowed");
     }
 
 }

@@ -1,10 +1,11 @@
 <?php
+
 /**
- *  ocs-apiserver
+ *  ocs-webserver
  *
  *  Copyright 2016 by pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ *    This file is part of ocs-webserver.
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Affero General Public License as
@@ -19,19 +20,31 @@
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
-class Application_Model_DbTable_MailTemplate extends Zend_Db_Table_Abstract
+class Application_Model_DbTable_ConfigStoreTags extends Local_Model_Table
 {
 
-    protected $_name = "mail_template";
+    protected $_name = "config_store_tag";
 
-    public function findBy($column, $value)
+    protected $_keyColumnsForRow = array('config_store_tag_id');
+
+    protected $_key = 'config_store_tag_id';
+
+    public function delete($where)
     {
-        $sel = $this->select()
-            ->where($column . '=?', $value)
-            ->limit(1);
+        $where = parent::_whereExpr($where);
 
-        $result = $this->fetchRow($sel);
+        /**
+         * Build the DELETE statement
+         */
+        $sql = "UPDATE " . parent::getAdapter()->quoteIdentifier($this->_name, true) . " SET `is_active` = 0, `deleted_at` = NOW() " . (($where) ? " WHERE $where" : '');
+
+        /**
+         * Execute the statement and return the number of affected rows
+         */
+        $stmt = parent::getAdapter()->query($sql);
+        $result = $stmt->rowCount();
+
         return $result;
     }
 
-}
+} 
