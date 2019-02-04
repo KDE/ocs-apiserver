@@ -38,8 +38,6 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
     {
         $this->initDefaultConfigName();
         $this->initAuth();
-        //$this->initTemplateData();
-        $this->initView();
         $this->setLayout();
         $this->_initResponseHeader();
         $this->_initAdminDbLogger();
@@ -64,23 +62,6 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
         }
     }
 
-    /*
-    private function initTemplateData()
-    {
-        if (Zend_Registry::isRegistered('store_template')) {
-            $this->templateConfigData = Zend_Registry::get('store_template');
-        } else {
-            $fileNameConfig = APPLICATION_PATH . '/configs/client' . $this->getDomainPostfix() . '.ini.php';
-            if (file_exists($fileNameConfig)) {
-                $this->templateConfigData = require APPLICATION_PATH . '/configs/client' . $this->getDomainPostfix() . '.ini.php';
-            } else {
-                $this->templateConfigData = require APPLICATION_PATH . '/configs/client_' . $this->defaultConfigName . '.ini.php';
-            }
-        }
-    }
-     * 
-     */
-
     /**
      * @return string
      */
@@ -103,28 +84,6 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
         }
 
         return $clientName;
-    }
-
-    public function initView()
-    {
-        /*
-        $headTitle = $this->templateConfigData['head']['browser_title'];
-        //set default site-title
-        $this->view->headTitle($headTitle, Zend_View_Helper_Placeholder_Container_Abstract::SET);
-
-        $this->view->headMeta()
-            ->appendName('author', $this->templateConfigData['head']['meta_author'])
-            ->appendName('robots', 'all')
-            ->appendName('robots', 'index')
-            ->appendName('robots', 'follow')
-            ->appendName('revisit-after', '3 days')
-            ->appendName('title', $this->templateConfigData['head']['browser_title'])
-            ->appendName('description', $this->templateConfigData['head']['meta_description'], array('lang' => 'en-US'))
-            ->appendName('keywords', $this->templateConfigData['head']['meta_keywords'], array('lang' => 'en-US'));
-
-        $this->view->template = $this->templateConfigData;
-         * 
-         */
     }
 
     protected function setLayout()
