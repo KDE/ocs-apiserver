@@ -1625,7 +1625,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         
 
         if($debugMode) {
-            $response['meta']['debug']['is_from_cache'] = $isFromCache->__toString();
+            $response['meta']['debug']['is_from_cache'] = $isFromCache;
             $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
             $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
             $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
