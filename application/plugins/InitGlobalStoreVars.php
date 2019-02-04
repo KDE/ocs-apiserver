@@ -40,7 +40,7 @@ class Application_Plugin_InitGlobalStoreVars extends Zend_Controller_Plugin_Abst
         $storeConfigName = $this->getStoreConfigName($storeHost);
         Zend_Registry::set('store_config_name', $storeConfigName);
 
-        //Zend_Registry::set('store_template', $this->getStoreTemplate($storeConfigName));
+        Zend_Registry::set('store_template', $this->getStoreTemplate($storeConfigName));
 
         $config_store = $this->getConfigStore($storeHost);
         Zend_Registry::set('store_config', $config_store);
