@@ -1556,6 +1556,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         $cacheNameCount = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName) . '_count';
         $contentsList = false;
         $count = 0;
+        $isFromCache = false;
 
         if (false === $hasSearchPart) {
             $contentsList = $cache->load($cacheName);
@@ -1566,36 +1567,13 @@ class Ocsv1Controller extends Zend_Controller_Action
             $projects = $tableProject->fetchAll($tableProjectSelect);
             $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
             $count = $counter['counter'];
-            
-            if (!count($projects)) {
-                if ($this->_format == 'json') {
-                    $response = array(
-                        'status'       => 'ok',
-                        'statuscode'   => 100,
-                        'message'      => '',
-                        'totalitems'   => $count,
-                        'itemsperpage' => $limit,
-                        'data'         => array()
-                    );
-                } else {
-                    $response = array(
-                        'meta' => array(
-                            'status'       => array('@text' => 'ok'),
-                            'statuscode'   => array('@text' => 100),
-                            'message'      => array('@text' => ''),
-                            'totalitems'   => array('@text' => $count),
-                            'itemsperpage' => array('@text' => $limit)
-                        ),
-                        'data' => array()
-                    );
-                }
-                return $response;
-            }
             $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
             if (false === $hasSearchPart) {
                 $cache->save($contentsList, $cacheName, array(), 1800);
                 $cache->save($count, $cacheNameCount, array(), 1800);
             }
+        } else {
+            $isFromCache = true;
         }
         
         if ($this->_format == 'json') {
@@ -1605,7 +1583,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 'message'      => '',
                 'totalitems'   => $count,
                 'itemsperpage' => $limit,
-                'data'         => array()
+                'data'         => $contentsList
             );
         } else {
             $response = array(
@@ -1616,30 +1594,20 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'totalitems'   => array('@text' => $count),
                     'itemsperpage' => array('@text' => $limit)
                 ),
-                'data' => array()
+                'data' => array('content' => $contentsList)
             );
         }
+        
+        
 
         if($debugMode) {
-           $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
-           $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
-        }
-        
-        if($debugMode) {
+            $response['meta']['debug']['is_from_cache'] = $isFromCache;
+            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
+            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
             $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
-        }
-
-        if($debugMode) {
-           $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
-           $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
-        }
-
-
-        if ($this->_format == 'json') {
-            $response['data'] = $contentsList;
-        } else {
-            $response['data'] = array('content' => $contentsList);
+            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
+            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
         }
 
         return $response;
