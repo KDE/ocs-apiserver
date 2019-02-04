@@ -125,16 +125,7 @@ class Application_Model_Tags
     public function getFilesForTags($object_id, $whereStatement)
     {
         $sql = "
-            select * from (
-
-                    SELECT GROUP_CONCAT(tag.tag_name) AS tags, GROUP_CONCAT(tag.tag_id) AS tag_ids,tgo.tag_object_id AS file_id, tgo.tag_parent_object_id As project_id
-                    FROM tag_object AS tgo
-                    JOIN tag ON tag.tag_id = tgo.tag_id
-                    WHERE tag_type_id = 3 #file
-                    AND tgo.is_deleted = 0
-                    GROUP BY tgo.tag_object_id
-
-            ) A
+            select * from stat_file_tags
             where project_id = :project_id 
         ";
         $sql .= $whereStatement;
