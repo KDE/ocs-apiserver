@@ -1654,7 +1654,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
             $filesList = $tableTags->getFilesForTags($project->project_id, $selectWhereString);
 
-            //if there is a tag filter and we havot found any files, skip this project
+            //if there is a tag filter and we have found any files, skip this project
             if($selectWhereString <> ' AND (1=1)' && (empty($filesList) || count($filesList) == 0)) {
                 //echo "No files found for project ".$project->project_id;
                 continue;
