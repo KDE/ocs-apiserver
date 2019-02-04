@@ -1597,16 +1597,15 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $cache->save($count, $cacheNameCount, array(), 1800);
             }
             $response['data'] = $contentsList;
-        }
-        
-        if ($this->_format == 'json') {
+        } else {
+            if ($this->_format == 'json') {
             $response = array(
                 'status'       => 'ok',
                 'statuscode'   => 100,
                 'message'      => '',
                 'totalitems'   => $count,
                 'itemsperpage' => $limit,
-                'data'         => array()
+                'data'         => $contentsList
             );
         } else {
             $response = array(
@@ -1617,9 +1616,12 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'totalitems'   => array('@text' => $count),
                     'itemsperpage' => array('@text' => $limit)
                 ),
-                'data' => array()
+                'data' => $contentsList
             );
         }
+        }
+        
+        
 
         if($debugMode) {
            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
