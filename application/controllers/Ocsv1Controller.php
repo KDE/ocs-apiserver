@@ -809,11 +809,9 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_content_categories'.$this->_getNameForStoreClient();
+        $cacheName = 'api_content_categories_'.md5($this->_getNameForStoreClient());
 
         $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
-
-
 
         if (false == ($categoriesList = $cache->load($cacheName))) {
             $categoriesList = $this->_buildCategories();
