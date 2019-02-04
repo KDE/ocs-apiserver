@@ -37,10 +37,10 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
     public function init()
     {
         $this->initDefaultConfigName();
-        $this->initAuth();
-        $this->setLayout();
-        $this->_initResponseHeader();
-        $this->_initAdminDbLogger();
+//        $this->initAuth();
+        //$this->setLayout();
+        //$this->_initResponseHeader();
+        //$this->_initAdminDbLogger();
     }
 
     protected function initDefaultConfigName()
