@@ -38,7 +38,7 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
     {
         $this->initDefaultConfigName();
         $this->initAuth();
-        $this->initTemplateData();
+        //$this->initTemplateData();
         $this->initView();
         $this->setLayout();
         $this->_initResponseHeader();
@@ -64,6 +64,7 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
         }
     }
 
+    /*
     private function initTemplateData()
     {
         if (Zend_Registry::isRegistered('store_template')) {
@@ -77,6 +78,8 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
             }
         }
     }
+     * 
+     */
 
     /**
      * @return string
@@ -104,6 +107,7 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
 
     public function initView()
     {
+        /*
         $headTitle = $this->templateConfigData['head']['browser_title'];
         //set default site-title
         $this->view->headTitle($headTitle, Zend_View_Helper_Placeholder_Container_Abstract::SET);
@@ -119,6 +123,8 @@ class Local_Controller_Action_DomainSwitch extends Zend_Controller_Action
             ->appendName('keywords', $this->templateConfigData['head']['meta_keywords'], array('lang' => 'en-US'));
 
         $this->view->template = $this->templateConfigData;
+         * 
+         */
     }
 
     protected function setLayout()
