@@ -1556,6 +1556,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         $cacheNameCount = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName) . '_count';
         $contentsList = false;
         $count = 0;
+        $isFromCache = false;
 
         if (false === $hasSearchPart) {
             $contentsList = $cache->load($cacheName);
@@ -1597,6 +1598,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $cache->save($count, $cacheNameCount, array(), 1800);
             }
         } else {
+            $isFromCache = true;
             if ($this->_format == 'json') {
                 $response = array(
                     'status'       => 'ok',
@@ -1623,12 +1625,13 @@ class Ocsv1Controller extends Zend_Controller_Action
         
 
         if($debugMode) {
-           $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
-           $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
+            $response['meta']['debug']['is_from_cache'] = $isFromCache->__toString();
+            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
+            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
             $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
-           $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
-           $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
+            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
+            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
         }
 
 
