@@ -1567,7 +1567,11 @@ class Ocsv1Controller extends Zend_Controller_Action
             $projects = $tableProject->fetchAll($tableProjectSelect);
             $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
             $count = $counter['counter'];
-            
+            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
+            if (false === $hasSearchPart) {
+                $cache->save($contentsList, $cacheName, array(), 1800);
+                $cache->save($count, $cacheNameCount, array(), 1800);
+            }
             if (!count($projects)) {
                 if ($this->_format == 'json') {
                     $response = array(
@@ -1576,7 +1580,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'message'      => '',
                         'totalitems'   => $count,
                         'itemsperpage' => $limit,
-                        'data'         => array()
+                        'data'         => $contentsList
                     );
                 } else {
                     $response = array(
@@ -1587,16 +1591,12 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'totalitems'   => array('@text' => $count),
                             'itemsperpage' => array('@text' => $limit)
                         ),
-                        'data' => array()
+                        'data' => array('content' => $contentsList)
                     );
                 }
                 //return $response;
             }
-            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
-            if (false === $hasSearchPart) {
-                $cache->save($contentsList, $cacheName, array(), 1800);
-                $cache->save($count, $cacheNameCount, array(), 1800);
-            }
+            
         } else {
             $isFromCache = true;
             if ($this->_format == 'json') {
@@ -1606,7 +1606,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'message'      => '',
                     'totalitems'   => $count,
                     'itemsperpage' => $limit,
-                    'data'         => array()
+                    'data'         => $contentsList
                 );
             } else {
                 $response = array(
@@ -1617,7 +1617,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'totalitems'   => array('@text' => $count),
                         'itemsperpage' => array('@text' => $limit)
                     ),
-                    'data' => array()
+                    'data' => array('content' => $contentsList)
                 );
             }
         }
@@ -1632,13 +1632,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
             $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
             $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
-        }
-
-
-        if ($this->_format == 'json') {
-            $response['data'] = $contentsList;
-        } else {
-            $response['data'] = array('content' => $contentsList);
         }
 
         return $response;
