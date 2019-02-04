@@ -1589,36 +1589,35 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'data' => array()
                     );
                 }
-                return $response;
+                //return $response;
             }
             $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
             if (false === $hasSearchPart) {
                 $cache->save($contentsList, $cacheName, array(), 1800);
                 $cache->save($count, $cacheNameCount, array(), 1800);
             }
-            $response['data'] = $contentsList;
         } else {
             if ($this->_format == 'json') {
-            $response = array(
-                'status'       => 'ok',
-                'statuscode'   => 100,
-                'message'      => '',
-                'totalitems'   => $count,
-                'itemsperpage' => $limit,
-                'data'         => $contentsList
-            );
-        } else {
-            $response = array(
-                'meta' => array(
-                    'status'       => array('@text' => 'ok'),
-                    'statuscode'   => array('@text' => 100),
-                    'message'      => array('@text' => ''),
-                    'totalitems'   => array('@text' => $count),
-                    'itemsperpage' => array('@text' => $limit)
-                ),
-                'data' => $contentsList
-            );
-        }
+                $response = array(
+                    'status'       => 'ok',
+                    'statuscode'   => 100,
+                    'message'      => '',
+                    'totalitems'   => $count,
+                    'itemsperpage' => $limit,
+                    'data'         => array()
+                );
+            } else {
+                $response = array(
+                    'meta' => array(
+                        'status'       => array('@text' => 'ok'),
+                        'statuscode'   => array('@text' => 100),
+                        'message'      => array('@text' => ''),
+                        'totalitems'   => array('@text' => $count),
+                        'itemsperpage' => array('@text' => $limit)
+                    ),
+                    'data' => array()
+                );
+            }
         }
         
         
