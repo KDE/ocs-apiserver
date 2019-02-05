@@ -1567,10 +1567,15 @@ class Ocsv1Controller extends Zend_Controller_Action
             $projects = $tableProject->fetchAll($tableProjectSelect);
             $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
             $count = $counter['counter'];
-            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
-            if (false === $hasSearchPart) {
-                $cache->save($contentsList, $cacheName, array(), 1800);
-                $cache->save($count, $cacheNameCount, array(), 1800);
+            
+            if(count($projects)>0) {
+                $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, implode(' ', $selectAndFiles->getPart('where')));
+                if (false === $hasSearchPart) {
+                    $cache->save($contentsList, $cacheName, array(), 1800);
+                    $cache->save($count, $cacheNameCount, array(), 1800);
+                }
+            } else {
+                $contentsList = array();
             }
         } else {
             $isFromCache = true;
@@ -1594,8 +1599,11 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'totalitems'   => array('@text' => $count),
                     'itemsperpage' => array('@text' => $limit)
                 ),
-                'data' => array('content' => $contentsList)
+                'data' => array()
             );
+            if(count($contentsList)>0) {
+                $response['data']['content'] = $contentsList;
+            }
         }
         
         
