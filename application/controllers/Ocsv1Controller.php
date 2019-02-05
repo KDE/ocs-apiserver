@@ -1599,8 +1599,11 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'totalitems'   => array('@text' => $count),
                     'itemsperpage' => array('@text' => $limit)
                 ),
-                'data' => array('content' => $contentsList)
+                'data' => array()
             );
+            if($count>0) {
+                $response['data']['content'] = $contentsList;
+            }
         }
         
         
