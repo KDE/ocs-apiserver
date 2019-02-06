@@ -1121,7 +1121,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             'category_title'  => 'cat_title',
             'xdg_type'        => 'cat_xdg_type',
             'name_legacy'     => 'cat_name_legacy',
-            new Zend_Db_Expr("(select count(1) as num_files from ppload.ppload_files f where f.active = 1 and f.collection_id = project.ppload_collection_id group by f.collection_id) as num_files")
+            new Zend_Db_Expr("(select count(1) as num_files from ppload.ppload_files f where f.active = 1 and f.collection_id = project.ppload_collection_id group by f.collection_id) as num_files"),
+            new Zend_Db_Expr("(select count(1) AS `amount` from `stat_downloads_24h` `s` WHERE s.collection_id = project.ppload_collection_id group by `s`.`collection_id`) as num_dls")
         ))->where('project.status = ?', Application_Model_Project::PROJECT_ACTIVE)->where('project.ppload_collection_id IS NOT NULL')
         ;
         $tableProjectSelect->having('num_files > 0');
@@ -1522,9 +1523,14 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $tableProjectSelect->order('stat_downloads_quarter_year.amount DESC');
                      * 
                      */
+                    /*
                     $tableProjectSelect->joinLeft(array('stat_downloads_24h' => 'stat_downloads_24h_v'),
                         'project.ppload_collection_id = stat_downloads_24h.collection_id', array());
                     $tableProjectSelect->order('stat_downloads_24h.amount DESC');
+                    $tableProjectSelect->order('project.created_at DESC');
+                     * 
+                     */
+                    $tableProjectSelect->order('num_dls DESC');
                     $tableProjectSelect->order('project.created_at DESC');
                     
                     break;
