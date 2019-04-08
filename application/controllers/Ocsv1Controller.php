@@ -1238,8 +1238,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             
             //collect tags
             $fileTags = "";
-            $fileTags .= "fileids=".$fileIds."##,";
-            $fileTags .= "filesql=".$sql."##,";
             
             //mimetype
             $fileTags .= "data##mimetype=".$file['type'].",";
