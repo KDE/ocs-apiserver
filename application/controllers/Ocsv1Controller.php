@@ -1738,7 +1738,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             //get the list of file-ids from tags-filter
             $fileIds = "";
             $filesList = array();
-            
+            $tableTags = new Application_Model_Tags();
             $filesList = $tableTags->getFilesForTags($project->project_id, $selectWhereString);
 
             //if there is a tag filter and we have found any files, skip this project
