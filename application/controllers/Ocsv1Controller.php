@@ -955,7 +955,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $cacheName = 'api_fetch_content_by_id_' . $contentId;
-
+        
         if (($response = $cache->load($cacheName))) {
             return $response;
         }
@@ -1186,7 +1186,7 @@ class Ocsv1Controller extends Zend_Controller_Action
     protected function getPPLoadInfo($project, $pploadApi, $downloads, $fileIds = null)
     {
         $downloadItems = array();
-
+        
         if (empty($project->ppload_collection_id)) {
             return array($downloadItems, $downloads);
         }
@@ -1202,20 +1202,95 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (false !== ($pploadInfo = $cache->load($cacheName))) {
             return $pploadInfo;
         }
+        
+        $tagTable = new Application_Model_Tags();
+        
+        //if filter for fileIds
+        //if($fileIds && count($fileIds) > 0) {
+        //    $filesRequest['ids'] = $fileIds;
+        //}
+        
+        //Load Files from DB
+        $pploadFileTable = new Default_Model_DbTable_PploadFiles();
+        $files = $pploadFileTable->fetchAllActiveFilesForFileInfo($project->ppload_collection_id, $fileIds);
+        
+        $packageTypeTags = $tagTable->getAllFilePackageTypeTags();
+        $architectureTags = $tagTable->getAllFileArchitectureTags();
+        
+        $i = 1;
+        foreach ($files as $file) {
+            //get File-Tags from DB
+            $fileTagArray = $tagTable->getTags($project->project_id, $tagTable::TAG_TYPE_FILE);
+            
+            //create ppload download hash: secret + collection_id + expire-timestamp
+            list($timestamp, $hash) = $this->createDownloadHash($project);
+            
+            //$tags = $this->_parseFileTags($file->tags);
+            
+            //collect tags
+            $fileTags = "";
+            //$fileTags .= "tags=".$file->tags."##";
+            
+            //mimetype
+            $fileTags .= "data##mimetype=".$file['type'].",";
+            $tagTable = new Application_Model_Tags();
+            
+            
+            $fileTags .= "fileTagArray=".$fileTagArray.",";
+            $fileTags .= "packageTypeTags=".$packageTypeTags.",";
+            $fileTags .= "architectureTags=".$architectureTags.",";
+            
+            foreach ($fileTagArray as $tag) {
+                if(in_array($tag, $packageTypeTags)) {
+                    $fileTags .= "application##packagetype=".$tag . ",";
+                } else if(in_array($tag, $architectureTags)) {
+                    $fileTags .= "application##architecture=".$tag.",";
+                }
+                
+                $fileTags .= "testdebug=".$tag.",";
+            }
+
+            $fileTags = rtrim($fileTags,",");
 
 
+            $downloads += (int)$file['downloaded_count'];
+
+            $downloadLink =
+                PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
+            $downloadItems['downloadway' . $i] = 1;
+            $downloadItems['downloadtype' . $i] = '';
+            $downloadItems['downloadprice' . $i] = '0';
+            $downloadItems['downloadlink' . $i] = $downloadLink;
+            $downloadItems['downloadname' . $i] = $file['name'];
+            $downloadItems['downloadsize' . $i] = round($file['size'] / 1024);
+            $downloadItems['downloadgpgfingerprint' . $i] = '';
+            $downloadItems['downloadgpgsignature' . $i] = '';
+            $downloadItems['downloadpackagename' . $i] = '';
+            $downloadItems['downloadrepository' . $i] = '';
+            $downloadItems['download_package_type' . $i] = $tags['packagetypeid'];
+            $downloadItems['download_package_arch' . $i] = $tags['architectureid'];
+            //$downloadItems['downloadtags' . $i] = empty($tags['filetags']) ? '' : implode(',', $tags['filetags']);
+            $downloadItems['downloadtags' . $i] = empty($fileTags) ? '' : $fileTags;
+            $i++;
+            
+        }
+        
+        
+        
+        /**
+         * 
+         *
         $filesRequest = array(
             'collection_id'     => ltrim($project->ppload_collection_id, '!'),
             'ocs_compatibility' => 'compatible',
             'perpage'           => 100
         );
 
-        //if filter for fileIds
-        if($fileIds && count($fileIds) > 0) {
-            $filesRequest['ids'] = $fileIds;
-        }
+        
 
         $filesResponse = $pploadApi->getFiles($filesRequest);
+        
+        
         if (isset($filesResponse->status) && $filesResponse->status == 'success') {
             $i = 1;
             foreach ($filesResponse->files as $file) {
@@ -1268,6 +1343,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $i++;
             }
         }
+        */
+        
 
         $cache->save(array($downloadItems, $downloads), $cacheName, array(), (self::CACHE_PERIOD_VALIDITY * 3600));
 
@@ -1615,13 +1692,12 @@ class Ocsv1Controller extends Zend_Controller_Action
         
 
         if($debugMode) {
-            $response['meta']['debug']['is_from_cache'] = $isFromCache;
+            $response['meta']['debug']['is_from_cache_now'] = $isFromCache;
             $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
             $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
             $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
-            $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
-            $response['meta']['debug']['select_files'] = $selectAndFiles->__toString();
+            $response['meta']['debug']['hello'] = 'World';
         }
 
         return $response;
@@ -1664,7 +1740,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             //Get Files from OCS-API
             //get the list of file-ids from tags-filter
             $fileIds = "";
-            
+            $filesList = null;
             
             if($selectWhereString <> ' AND (1=1)') {
                 $tableTags = new Application_Model_Tags();
