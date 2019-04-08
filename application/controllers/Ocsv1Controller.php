@@ -1771,6 +1771,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             foreach ($filesList as $file) {
                 $fileIds .= $file['file_id'].',';
             }
+            $fileIds = rtrim($fileIds,",");
 
             //var_dump($fileIds);
 
