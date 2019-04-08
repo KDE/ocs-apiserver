@@ -159,12 +159,10 @@ class Application_Model_DbTable_Project extends Local_Model_Table
         $sql = "    select  *
                      from ppload.ppload_files f 
                      where f.collection_id = :collection_id 
+                     and f.active = 1
                    ";        
         if(!empty($fileIds)) {
            $sql .= " and f.id in (".$fileIds.")";
-        }
-        if($ignore_status == FALSE && $activeFiles == FALSE) {
-           $sql .= " and f.active = 0";
         }
         $result = $this->_db->query($sql,array('collection_id' => $collection_id, ))->fetchAll();      
         return $result;
