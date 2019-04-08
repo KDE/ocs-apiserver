@@ -1214,6 +1214,15 @@ class Ocsv1Controller extends Zend_Controller_Action
         $pploadFileTable = new Application_Model_DbTable_PploadFiles();
         $files = $pploadFileTable->fetchAllActiveFilesForFileInfo($project->ppload_collection_id, $fileIds);
         
+        $sql = "    select  *
+                     from ppload.ppload_files f 
+                     where f.collection_id = :collection_id 
+                     and f.active = 1
+                   ";        
+        if(null != $fileIds && count($fileIds) > 0) {
+           $sql .= " and f.id in (".$fileIds.")";
+        }
+        
         $packageTypeTags = $tagTable->getAllFilePackageTypeTags();
         $architectureTags = $tagTable->getAllFileArchitectureTags();
         
@@ -1230,6 +1239,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             //collect tags
             $fileTags = "";
             $fileTags .= "fileids=".$fileIds."##,";
+            $fileTags .= "filesql=".$sql."##,";
             
             //mimetype
             $fileTags .= "data##mimetype=".$file['type'].",";
