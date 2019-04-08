@@ -1211,7 +1211,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         //}
         
         //Load Files from DB
-        $pploadFileTable = new Default_Model_DbTable_PploadFiles();
+        $pploadFileTable = new Application_Model_DbTable_Project();
         $files = $pploadFileTable->fetchAllActiveFilesForFileInfo($project->ppload_collection_id, $fileIds);
         
         $packageTypeTags = $tagTable->getAllFilePackageTypeTags();

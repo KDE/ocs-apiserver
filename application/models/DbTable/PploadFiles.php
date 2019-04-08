@@ -20,7 +20,7 @@
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
-class Default_Model_DbTable_PploadFiles extends Local_Model_Table
+class Application_Model_DbTable_Project extends Local_Model_Table
 {
     /** @var  Zend_Cache_Core */
     protected $cache; 
