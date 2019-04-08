@@ -1235,19 +1235,12 @@ class Ocsv1Controller extends Zend_Controller_Action
             $fileTags .= "data##mimetype=".$file['type'].",";
             $tagTable = new Application_Model_Tags();
             
-            
-            $fileTags .= "fileTagArray=".$fileTagArray.",";
-            $fileTags .= "packageTypeTags=".$packageTypeTags.",";
-            $fileTags .= "architectureTags=".$architectureTags.",";
-            
             foreach ($fileTagArray as $tag) {
                 if(in_array($tag, $packageTypeTags)) {
                     $fileTags .= "application##packagetype=".$tag . ",";
                 } else if(in_array($tag, $architectureTags)) {
                     $fileTags .= "application##architecture=".$tag.",";
                 }
-                
-                $fileTags .= "testdebug=".$tag.",";
             }
 
             $fileTags = rtrim($fileTags,",");
