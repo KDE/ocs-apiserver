@@ -105,6 +105,7 @@ class Application_Model_Tags
             JOIN tag ON tag.tag_id = tag_object.tag_id
             WHERE tag_type_id = :type 
             AND tag_object_id = :object_id
+            AND tag_object.is_deleted = 0
         ";
 
         $result = $this->getAdapter()->fetchAll($sql, array('type' => $tag_type,'object_id' => $object_id));
