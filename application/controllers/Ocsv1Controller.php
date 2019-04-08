@@ -1245,8 +1245,6 @@ class Ocsv1Controller extends Zend_Controller_Action
                 } else if(in_array($tag, $architectureTags)) {
                     $fileTags .= "application##architecture=".$tag.",";
                 }
-                
-                $fileTags .= "testdebug=".$tag.",";
             }
 
             $fileTags = rtrim($fileTags,",");
