@@ -107,7 +107,7 @@ class Application_Model_Tags
             GROUP BY tag_object.tag_object_id
         ";
 
-        $result = $this->getAdapter()->fetchRow($sql, array('type' => $tag_type, 'object_id' => $object_id));
+        $result = $this->getAdapter()->fetchAll($sql, array('type' => $tag_type, 'object_id' => $object_id));
         $returnArray = array();
         if (isset($result)) {
             foreach ($result as $tag) {
