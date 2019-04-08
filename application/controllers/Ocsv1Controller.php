@@ -1264,8 +1264,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             $downloadItems['downloadgpgsignature' . $i] = '';
             $downloadItems['downloadpackagename' . $i] = '';
             $downloadItems['downloadrepository' . $i] = '';
-            $downloadItems['download_package_type' . $i] = $tags['packagetypeid'];
-            $downloadItems['download_package_arch' . $i] = $tags['architectureid'];
+            $downloadItems['download_package_type' . $i] = null;
+            $downloadItems['download_package_arch' . $i] = null;
             //$downloadItems['downloadtags' . $i] = empty($tags['filetags']) ? '' : implode(',', $tags['filetags']);
             $downloadItems['downloadtags' . $i] = empty($fileTags) ? '' : $fileTags;
             $i++;
