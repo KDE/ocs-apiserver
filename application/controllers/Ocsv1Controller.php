@@ -1740,7 +1740,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             //Get Files from OCS-API
             //get the list of file-ids from tags-filter
             $fileIds = "";
-            $filesList = null;
+            $filesList = array();
             
             if($selectWhereString <> ' AND (1=1)') {
                 $tableTags = new Application_Model_Tags();

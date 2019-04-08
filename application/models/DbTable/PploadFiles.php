@@ -23,7 +23,7 @@
 class Default_Model_DbTable_PploadFiles extends Local_Model_Table
 {
     /** @var  Zend_Cache_Core */
-    protected $cache;
+    protected $cache; 
     
     protected $_name = "ppload_files";
 
