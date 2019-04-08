@@ -1739,6 +1739,14 @@ class Ocsv1Controller extends Zend_Controller_Action
             $fileIds = "";
             $filesList = array();
             
+            $filesList = $tableTags->getFilesForTags($project->project_id, $selectWhereString);
+
+            //if there is a tag filter and we have found any files, skip this project
+            if($selectWhereString <> ' AND (1=1)' && (empty($filesList) || count($filesList) == 0)) {
+                //echo "No files found for project ".$project->project_id;
+                continue;
+            }
+            /*
             if($selectWhereString <> ' AND (1=1)') {
                 $tableTags = new Application_Model_Tags();
                 $filesList = $tableTags->getFilesForTags($project->project_id, $selectWhereString);
@@ -1748,7 +1756,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     //echo "No files found for project ".$project->project_id;
                     continue;
                 }
-            }
+            }*/
 
             foreach ($filesList as $file) {
                 $fileIds .= $file['file_id'].',';
