@@ -162,7 +162,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
                      and f.active = 1
                    ";        
         if(null != $fileIds && count($fileIds) > 0) {
-           $sql .= " and f.id in (".$fileIds.")";
+           //$sql .= " and f.id in (".$fileIds.")";
         }
         $result = $this->_db->query($sql,array('collection_id' => $collection_id, ))->fetchAll();      
         return $result;
