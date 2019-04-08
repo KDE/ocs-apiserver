@@ -1220,9 +1220,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         $i = 1;
         foreach ($files as $file) {
             //get File-Tags from DB
-            $fileTagArray = $tagTable->getTagsAsArray($project->project_id, $tagTable::TAG_TYPE_FILE);
-            
-            var_dump($fileTagArray);
+            $fileTagArray = $tagTable->getTagsAsArray($file['id'], $tagTable::TAG_TYPE_FILE);
             
             //create ppload download hash: secret + collection_id + expire-timestamp
             list($timestamp, $hash) = $this->createDownloadHash($project);
