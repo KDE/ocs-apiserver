@@ -90,6 +90,35 @@ class Application_Model_Tags
         return null;
     }
     
+    
+    /**
+     * @param int $object_id
+     * @param int $tag_type
+     *
+     * @return string|null
+     */
+    public function getTagsAsArray($object_id, $tag_type)
+    {
+        $sql = "
+            SELECT tag.tag_name
+            FROM tag_object
+            JOIN tag ON tag.tag_id = tag_object.tag_id
+            WHERE tag_type_id = :type AND tag_object_id = :object_id
+            GROUP BY tag_object.tag_object_id
+        ";
+
+        $result = $this->getAdapter()->fetchRow($sql, array('type' => $tag_type, 'object_id' => $object_id));
+        $returnArray = array();
+        if (isset($result)) {
+            foreach ($result as $tag) {
+                $returnArray[] = $tag['tag_name'];
+            }
+            return $returnArray;
+        }
+
+        return null;
+    }
+    
     /**
      * @return array|null
      */
