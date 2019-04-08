@@ -1233,6 +1233,10 @@ class Ocsv1Controller extends Zend_Controller_Action
             
             //mimetype
             $fileTags .= "data##mimetype=".$file['type'].",";
+            
+            $fileTags .= "tags=".$fileTagArray->__toString().",";
+            
+            
             $tagTable = new Application_Model_Tags();
             
             foreach ($fileTagArray as $tag) {
