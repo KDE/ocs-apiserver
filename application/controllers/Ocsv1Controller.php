@@ -189,7 +189,6 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $baseUri = $this->_uriScheme . '://' . $credentials . $_SERVER['SERVER_NAME'];
 
-        $webSite = 'www.opendesktop.org';
         $webSite = Zend_Registry::isRegistered('store_host') ? Zend_Registry::get('store_host') : 'www.opendesktop.org';
 
         //Mask api.kde-look.org to store.kde.org
@@ -810,7 +809,6 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_content_categories';
         $cacheName = 'api_content_categories_'.md5($this->_getNameForStoreClient());
 
         $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
@@ -918,7 +916,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         );
         $smallPreviewPicSize = array(
             'width'  => 100,
-            'height' => 100
             'height' => 100,
             'crop'   => 0
         );
@@ -933,7 +930,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             $this->_sendResponse($response, $this->_format);
         } // Gets a list of a specific set of contents
         else {
-            $response = $this->fetchCategoryContent($previewPicSize, $smallPreviewPicSize, $pploadApi);
             $response = $this->fetchCategoryContent($previewPicSize, $smallPreviewPicSize, $pploadApi, $debugMode);
 
             $this->_sendResponse($response, $this->_format);
@@ -959,7 +955,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $cacheName = 'api_fetch_content_by_id_' . $contentId;
-
         
         if (($response = $cache->load($cacheName))) {
             return $response;
@@ -1125,7 +1120,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             'member_username' => 'username',
             'category_title'  => 'cat_title',
             'xdg_type'        => 'cat_xdg_type',
-            'name_legacy'     => 'cat_name_legacy'
             'name_legacy'     => 'cat_name_legacy',
             new Zend_Db_Expr("(select count(1) as num_files from ppload.ppload_files f where f.active = 1 and f.collection_id = project.ppload_collection_id group by f.collection_id) as num_files"),
             new Zend_Db_Expr("(select count(1) AS `amount` from `stat_downloads_24h` `s` WHERE s.collection_id = project.ppload_collection_id group by `s`.`collection_id`) as num_dls")
@@ -1189,11 +1183,9 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    protected function getPPLoadInfo($project, $pploadApi, $downloads)
     protected function getPPLoadInfo($project, $pploadApi, $downloads, $fileIds = null)
     {
         $downloadItems = array();
-
         
         if (empty($project->ppload_collection_id)) {
             return array($downloadItems, $downloads);
@@ -1299,11 +1291,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             'perpage'           => 100
         );
 
-
         
-
-
-
 
         $filesResponse = $pploadApi->getFiles($filesRequest);
         
@@ -1340,10 +1328,8 @@ class Ocsv1Controller extends Zend_Controller_Action
 
 
                 $downloads += (int)$file->downloaded_count;
-                $tags = $this->_parseFileTags($file->tags);
 
                 $downloadLink =
-                    PPLOAD_API_URI . 'files/downloadfile/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
                     PPLOAD_API_URI . 'files/download/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
                 $downloadItems['downloadway' . $i] = 1;
                 $downloadItems['downloadtype' . $i] = '';
@@ -1356,8 +1342,6 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $downloadItems['downloadpackagename' . $i] = '';
                 $downloadItems['downloadrepository' . $i] = '';
                 $downloadItems['download_package_type' . $i] = $tags['packagetypeid'];
-                $downloadItems['download_package_arch' . $i] = $tags['packagearch'];
-                $downloadItems['downloadtags' . $i] = empty($tags['filetags']) ? '' : implode(',', $tags['filetags']);
                 $downloadItems['download_package_arch' . $i] = $tags['architectureid'];
                 //$downloadItems['downloadtags' . $i] = empty($tags['filetags']) ? '' : implode(',', $tags['filetags']);
                 $downloadItems['downloadtags' . $i] = empty($fileTags) ? '' : $fileTags;
@@ -1439,7 +1423,6 @@ class Ocsv1Controller extends Zend_Controller_Action
     protected function fetchCategoryContent(
         $previewPicSize,
         $smallPreviewPicSize,
-        $pploadApi
         $pploadApi,
         $debugMode
     ) {
@@ -1511,34 +1494,16 @@ class Ocsv1Controller extends Zend_Controller_Action
          * deprecated: we use tags now
         if (!empty($this->_params['package_types'])) {
             // package_types parameter: values separated by ","
-            $packageTypeList = explode(',', $this->_params['package_types']);
             if( strpos( $this->_params['package_types'], ',' ) !== false) {
                 $packageTypeList = explode(',', $this->_params['package_types']);
             } else {
                 $packageTypeList = array($this->_params['package_types']);
             }
 
-            //20180320 ronald: allow filter package_type for all pages
-            /*$storeConfig = Zend_Registry::isRegistered('store_config') ? Zend_Registry::get('store_config') : null;
-            $storePackageTypeIds = null;
-            if ($storeConfig) {
-                $storePackageTypeIds = $storeConfig['package_type'];
             $select1 = $tableProject->select();
             foreach($packageTypeList as $item) {
                 $select1->orWhere('find_in_set(?, package_shortnames)', $item);
             }
-            if ($storePackageTypeIds) {
-                $tableProjectSelect->join(array(
-                    'package_type' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM project_package_type WHERE '
-                        . $tableProject->getAdapter()->quoteInto('package_type_id IN (?)', $packageTypeList) . ')')
-                ), 'project.project_id = package_type.project_id', array());
-            }
-            */
-            $tableProjectSelect->join(array(
-                'package_type' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM project_package_type WHERE '
-                    . $tableProject->getAdapter()->quoteInto('package_type_id IN (?)', $packageTypeList) . ')')
-            ), 'project.project_id = package_type.project_id', array());
-            
             $tableProjectSelect->where(implode(' ', $select1->getPart('where')));
 
         }
@@ -1556,9 +1521,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         if (false === empty($this->_params['tags'])) {
-            foreach (explode(',', $this->_params['tags']) as $item) {
-                if ($item && strlen($item) > 2) {
-                    $tableProjectSelect->orWhere('find_in_set(?, tags)', $item);
             // tags parameter: values separated by "," and | for or filter
             if( strpos( $this->_params['tags'], ',' ) !== false) {
                 $tagList = explode(',', $this->_params['tags']);
@@ -1604,7 +1566,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             $selectAndFiles = $tableProject->select();
             $selectAndFiles->where("1=1");
         }
-        
 
         if (!empty($this->_params['ghns_excluded'])) {
             $tableProjectSelect->where('project.ghns_excluded = ?', $this->_params['ghns_excluded']);
@@ -1675,8 +1636,6 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $tableProjectSelect->limit($limit, $offset);
 
-        $projects = $tableProject->fetchAll($tableProjectSelect);
-        $count = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
 
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
@@ -1715,10 +1674,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                 'status'       => 'ok',
                 'statuscode'   => 100,
                 'message'      => '',
-                'totalitems'   => $count['counter'],
                 'totalitems'   => $count,
                 'itemsperpage' => $limit,
-                'data'         => array()
                 'data'         => $contentsList
             );
         } else {
@@ -1727,31 +1684,11 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'status'       => array('@text' => 'ok'),
                     'statuscode'   => array('@text' => 100),
                     'message'      => array('@text' => ''),
-                    'totalitems'   => array('@text' => $count['counter']),
                     'totalitems'   => array('@text' => $count),
                     'itemsperpage' => array('@text' => $limit)
                 ),
                 'data' => array()
             );
-        }
-
-        if (!count($projects)) {
-            return $response;
-        }
-
-        /** @var Zend_Cache_Core $cache */
-        $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString());
-        $contentsList = false;
-
-        if (false === $hasSearchPart) {
-            $contentsList = $cache->load($cacheName);
-        }
-
-        if (false == $contentsList) {
-            $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects);
-            if (false === $hasSearchPart) {
-                $cache->save($contentsList, $cacheName, array(), 1800);
             if(count($contentsList)>0) {
                 $response['data']['content'] = $contentsList;
             }
@@ -1759,10 +1696,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         
         
 
-        if ($this->_format == 'json') {
-            $response['data'] = $contentsList;
-        } else {
-            $response['data'] = array('content' => $contentsList);
         if($debugMode) {
             $response['meta']['debug']['is_from_cache_now'] = $isFromCache;
             $response['meta']['debug']['select_project'] = $tableProjectSelect->__toString();
@@ -1770,7 +1703,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             $response['meta']['debug']['store_client_name'] = $this->_getNameForStoreClient();
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
             $response['meta']['debug']['hello'] = 'World';
-
         }
 
         return $response;
@@ -1786,7 +1718,6 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    protected function _buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects)
     protected function _buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects, $selectWhereString)
     {
         $contentsList = array();
@@ -1810,10 +1741,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             list($previewPics, $smallPreviewPics) = $this->getGalleryPictures($project, $previewPicSize, $smallPreviewPicSize);
 
             $downloads = $project->count_downloads_hive;
-            list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads);
-
-
-
 
             //Get Files from OCS-API
             //get the list of file-ids from tags-filter
@@ -1963,7 +1890,6 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $tags = $this->_parseFileTags($file->tags);
         $downloadLink =
-            PPLOAD_API_URI . 'files/downloadfile/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
             PPLOAD_API_URI . 'files/download/id/' . $file->id . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file->name;
 
         if ($this->_format == 'json') {
@@ -2154,7 +2080,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         return $commentList;
     }
 
-}
     public function voteAction()
     {
         $this->_sendErrorResponse(405, "method not allowed");
