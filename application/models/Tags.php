@@ -25,6 +25,7 @@
 class Application_Model_Tags
 {
     const TAG_TYPE_PROJECT = 1;
+    const TAG_TYPE_FILE = 3;
 
     /**
      * Application_Model_Tags constructor.
@@ -84,6 +85,91 @@ class Application_Model_Tags
         $result = $this->getAdapter()->fetchRow($sql, array('type' => $tag_type, 'object_id' => $object_id));
         if (isset($result['tag_names'])) {
             return $result['tag_names'];
+        }
+
+        return null;
+    }
+
+
+
+    
+    
+    /**
+     * @param int $object_id
+     * @param int $tag_type
+     *
+     * @return string|null
+     */
+    public function getTagsAsArray($object_id, $tag_type)
+    {
+        $sql = "
+            SELECT tag.tag_name
+            FROM tag_object
+            JOIN tag ON tag.tag_id = tag_object.tag_id
+            WHERE tag_type_id = :type 
+            AND tag_object_id = :object_id
+            AND tag_object.is_deleted = 0
+        ";
+
+
+        $result = $this->getAdapter()->fetchAll($sql, array('type' => $tag_type,'object_id' => $object_id));
+        $returnArray = array();
+        if (isset($result)) {
+            foreach ($result as $tag) {
+                $returnArray[] = $tag['tag_name'];
+            }
+            return $returnArray;
+        }
+
+        return null;
+    }
+    
+
+
+
+    /**
+     * @return array|null
+     */
+    public function getAllFilePackageTypeTags()
+    {
+        $sql = "
+            select t.tag_name from tag t
+            join tag_group_item tgi on tgi.tag_id = t.tag_id
+            join tag_group tg on tg.group_id = tgi.tag_group_id
+            where tgi.tag_group_id = 8
+        ";
+
+        $result = $this->getAdapter()->fetchAll($sql);
+        $returnArray = array();
+        if (isset($result)) {
+            foreach ($result as $tag) {
+                $returnArray[] = $tag['tag_name'];
+            }
+            return $returnArray;
+        }
+
+        return null;
+    }
+    
+    /**
+     * @return array|null
+     */
+    public function getAllFileArchitectureTags()
+    {
+        $sql = "
+            select t.tag_name from tag t
+            join tag_group_item tgi on tgi.tag_id = t.tag_id
+            join tag_group tg on tg.group_id = tgi.tag_group_id
+            where tgi.tag_group_id = 9
+        ";
+
+        $result = $this->getAdapter()->fetchAll($sql);
+        $returnArray = array();
+        if (isset($result)) {
+            foreach ($result as $tag) {
+                $returnArray[] = $tag['tag_name'];
+            }
+            return $returnArray;
         }
 
         return null;
