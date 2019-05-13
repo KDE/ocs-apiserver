@@ -1847,12 +1847,6 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         $this->_authenticateUser();
 
-        $pploadApi = new Ppload_Api(array(
-            'apiUri'   => PPLOAD_API_URI,
-            'clientId' => PPLOAD_CLIENT_ID,
-            'secret'   => PPLOAD_SECRET
-        ));
-
         $project = null;
         $file = null;
 
@@ -1965,7 +1959,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         
         
         
-
+        /**
         if ($project->ppload_collection_id
             && $this->getParam('itemid')
             && ctype_digit((string)$this->getParam('itemid'))) {
@@ -2038,6 +2032,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                 )
             );
         }
+         * 
+         */
 
         $this->_sendResponse($response, $this->_format);
     }
