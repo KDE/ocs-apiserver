@@ -114,7 +114,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
     }     
 
     
-    private function fetchAllFiles($collection_id, $ignore_status = true, $activeFiles = false, $perPage = 1000, $page = 1)
+    private function fetchAllFiles($collection_id, $ignore_status = true, $activeFiles = false, $perpage = 1000, $page = 1)
     {
         
         if(empty($collection_id)) {
@@ -136,7 +136,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
             $offset = ($page - 1) * $perpage;
         }
         
-        $sql .= " ORDER BY f.name ASC LIMIT ".$perPage. " OFFSET ".$offset;
+        $sql .= " ORDER BY f.name ASC LIMIT ".$perpage. " OFFSET ".$offset;
         $result = $this->_db->query($sql,array('collection_id' => $collection_id, ))->fetchAll();      
         return $result;
     }
