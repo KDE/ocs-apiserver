@@ -131,6 +131,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
         if($ignore_status == FALSE && $activeFiles == FALSE) {
            $sql .= " and f.active = 0";
         }
+        $sql .= " ORDER BY f.name ASC ";
         $result = $this->_db->query($sql,array('collection_id' => $collection_id, ))->fetchAll();      
         return $result;
     }
@@ -164,6 +165,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
         if(null != $fileIds && count($fileIds) > 0) {
            $sql .= " and f.id in (".$fileIds.")";
         }
+        $sql .= " ORDER BY f.name ASC ";
         $result = $this->_db->query($sql,array('collection_id' => $collection_id, ))->fetchAll();      
         return $result;
         
