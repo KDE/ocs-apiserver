@@ -114,7 +114,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
     }     
 
     
-    private function fetchAllFiles($collection_id, $ignore_status = true, $activeFiles = false)
+    private function fetchAllFiles($collection_id, $ignore_status = true, $activeFiles = false, $perpage = 1000, $page = 1)
     {
         
         if(empty($collection_id)) {
@@ -131,7 +131,12 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
         if($ignore_status == FALSE && $activeFiles == FALSE) {
            $sql .= " and f.active = 0";
         }
-        $sql .= " ORDER BY f.name ASC";
+        $offset = 0;
+        if ($page > 1) {
+            $offset = ($page - 1) * $perpage;
+        }
+        
+        $sql .= " ORDER BY f.name ASC LIMIT ".$perpage. " OFFSET ".$offset;
         $result = $this->_db->query($sql,array('collection_id' => $collection_id, ))->fetchAll();      
         return $result;
     }
@@ -144,7 +149,12 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
     public function fetchAllActiveFilesForProject($collection_id)
     {
         return $this->fetchAllFiles($collection_id, false, true);
-    }   
+    }
+    
+    public function fetchActiveFileWithIndex($collection_id, $index)
+    {
+        return $this->fetchAllFiles($collection_id, false, true, 1, $index);
+    }
 
     public function fetchAllInactiveFilesForProject($collection_id)
     {
@@ -165,7 +175,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
         if(null != $fileIds && count($fileIds) > 0) {
            $sql .= " and f.id in (".$fileIds.")";
         }
-        $sql .= " ORDER BY f.name ASC";
+        $sql .= " ORDER BY f.name ASC ";
         $result = $this->_db->query($sql,array('collection_id' => $collection_id, ))->fetchAll();      
         return $result;
         

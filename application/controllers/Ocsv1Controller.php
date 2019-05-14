@@ -1847,12 +1847,6 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         $this->_authenticateUser();
 
-        $pploadApi = new Ppload_Api(array(
-            'apiUri'   => PPLOAD_API_URI,
-            'clientId' => PPLOAD_CLIENT_ID,
-            'secret'   => PPLOAD_SECRET
-        ));
-
         $project = null;
         $file = null;
 
@@ -1865,10 +1859,119 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (!$project) {
             $this->_sendErrorResponse(101, 'content not found');
         }
-
+        
+        if (((int)$this->getParam('itemid')) === 0) {
+                $this->_sendErrorResponse(103, 'content item not found');
+            }
+        
         if ($project->ppload_collection_id
             && $this->getParam('itemid')
             && ctype_digit((string)$this->getParam('itemid'))) {
+            $tagTable = new Application_Model_Tags();
+
+            //Load Files from DB
+            $pploadFileTable = new Application_Model_DbTable_PploadFiles();
+            $files = $pploadFileTable->fetchActiveFileWithIndex($project->ppload_collection_id, $this->getParam('itemid'));
+            
+            if (empty($files)) {
+                $this->_sendErrorResponse(103, 'content item not found');
+            }
+
+            $packageTypeTags = $tagTable->getAllFilePackageTypeTags();
+            $architectureTags = $tagTable->getAllFileArchitectureTags();
+
+            $fileTags = "";
+            foreach ($files as $file) {
+                //get File-Tags from DB
+                $fileTagArray = $tagTable->getTagsAsArray($file['id'], $tagTable::TAG_TYPE_FILE);
+
+                //create ppload download hash: secret + collection_id + expire-timestamp
+                list($timestamp, $hash) = $this->createDownloadHash($project);
+
+                //$tags = $this->_parseFileTags($file->tags);
+
+                //collect tags
+                $fileTags = "";
+
+                //mimetype
+                $fileTags .= "data##mimetype=".$file['type'].",";
+
+                //$fileTags .= "tags=".$fileTagArray->__toString().",";
+
+
+                $tagTable = new Application_Model_Tags();
+
+                foreach ($fileTagArray as $tag) {
+                    if(in_array($tag, $packageTypeTags)) {
+                        $fileTags .= "application##packagetype=".$tag . ",";
+                    } else if(in_array($tag, $architectureTags)) {
+                        $fileTags .= "application##architecture=".$tag.",";
+                    }
+                }
+
+                $fileTags = rtrim($fileTags,",");
+
+                $downloadLink =
+                    PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
+                
+                if ($this->_format == 'json') {
+                    $response = array(
+                        'status'     => 'ok',
+                        'statuscode' => 100,
+                        'message'    => '',
+                        'data'       => array(
+                            array(
+                                'details'               => 'download',
+                                'downloadway'           => 1,
+                                'downloadlink'          => $downloadLink,
+                                'mimetype'              => $file['type'],
+                                'gpgfingerprint'        => '',
+                                'gpgsignature'          => '',
+                                'packagename'           => '',
+                                'repository'            => '',
+                                'download_package_type' => null,
+                                'download_package_arch' => null,
+                                'downloadtags'          => empty($fileTags) ? '' : $fileTags
+                            )
+                        )
+                    );
+                } else {
+                    $response = array(
+                        'meta' => array(
+                            'status'     => array('@text' => 'ok'),
+                            'statuscode' => array('@text' => 100),
+                            'message'    => array('@text' => '')
+                        ),
+                        'data' => array(
+                            'content' => array(
+                                'details'               => 'download',
+                                'downloadway'           => array('@text' => 1),
+                                'downloadlink'          => array('@text' => $downloadLink),
+                                'mimetype'              => array('@text' => $file['type']),
+                                'gpgfingerprint'        => array('@text' => ''),
+                                'gpgsignature'          => array('@text' => ''),
+                                'packagename'           => array('@text' => ''),
+                                'repository'            => array('@text' => ''),
+                                'download_package_type' => array('@text' => ''),
+                                'download_package_arch' => array('@text' => ''),
+                                'downloadtags'          => array('@text' => empty($fileTags) ? '' : $fileTags)
+                            )
+                        )
+                    );
+                }
+                
+            }
+        
+        }
+        
+        
+        
+        
+        /**
+        if ($project->ppload_collection_id
+            && $this->getParam('itemid')
+            && ctype_digit((string)$this->getParam('itemid'))) {
+            
             $filesRequest = array(
                 'collection_id'     => ltrim($project->ppload_collection_id, '!'),
                 'ocs_compatibility' => 'compatible',
@@ -1937,6 +2040,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                 )
             );
         }
+         * 
+         */
 
         $this->_sendResponse($response, $this->_format);
     }
