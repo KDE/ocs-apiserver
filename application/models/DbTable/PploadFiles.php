@@ -153,7 +153,7 @@ class Application_Model_DbTable_PploadFiles extends Local_Model_Table
     
     public function fetchActiveFileWithIndex($collection_id, $index)
     {
-        return $this->fetchAllFiles($collection_id, false, true, 1000, $index);
+        return $this->fetchAllFiles($collection_id, false, true, 1, $index);
     }
 
     public function fetchAllInactiveFilesForProject($collection_id)
