@@ -1869,7 +1869,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $pploadFileTable = new Application_Model_DbTable_PploadFiles();
             $files = $pploadFileTable->fetchActiveFileWithIndex($project->ppload_collection_id, $this->getParam('itemid'));
             
-            if (empty($files)) {
+            if (empty($files) || (int)$this->getParam('itemid')==0) {
                 $this->_sendErrorResponse(103, 'content item not found');
             }
 
