@@ -992,6 +992,9 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $downloads = $project->count_downloads_hive;
         list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads);
+        
+        $score = $project->laplace_score;
+        $score = round($score/100,2);
 
         if ($this->_format == 'json') {
             $response = array(
@@ -1012,7 +1015,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'created'              => $created,
                         'changed'              => $changed,
                         'downloads'            => $downloads,
-                        'score'                => $project->laplace_score,
+                        'score'                => $score,
                         'summary'              => '',
                         'description'          => $project->description,
                         'changelog'            => '',
@@ -1068,7 +1071,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'created'              => array('@text' => $created),
                             'changed'              => array('@text' => $changed),
                             'downloads'            => array('@text' => $downloads),
-                            'score'                => array('@text' => $project->laplace_score),
+                            'score'                => array('@text' => $score),
                             'summary'              => array('@text' => ''),
                             'description'          => array('@cdata' => $project->description),
                             'changelog'            => array('@text' => ''),
@@ -1596,7 +1599,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $tableProjectSelect->order('project.title ASC');
                     break;
                 case 'high':
-                    $tableProjectSelect->order(new Zend_Db_Expr('laplace_score(project.count_likes,project.count_dislikes) DESC'));
+                    $tableProjectSelect->order('laplace_score DESC');
                     break;
                 case 'down':
                     /**
@@ -1779,6 +1782,9 @@ class Ocsv1Controller extends Zend_Controller_Action
             if (empty($downloadItems)) {
                 continue; // jump to next product
             }
+            
+            $score = $project->laplace_score;
+            $score = round($score/100,2);
 
             if ($this->_format == 'json') {
                 $contentsList[] = array(
@@ -1794,7 +1800,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'created'     => $created,
                         'changed'     => $changed,
                         'downloads'   => $downloads,
-                        'score'       => $project->laplace_score,
+                        'score'       => $score,
                         'summary'     => '',
                         'description' => $project->description,
                         'comments'    => $project->count_comments,
@@ -1828,7 +1834,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'created'     => array('@text' => $created),
                         'changed'     => array('@text' => $changed),
                         'downloads'   => array('@text' => $downloads),
-                        'score'       => array('@text' => $project->laplace_score),
+                        'score'       => array('@text' => $score),
                         'summary'     => array('@text' => ''),
                         'description' => array('@cdata' => $project->description),
                         'comments'    => array('@text' => $project->count_comments),
