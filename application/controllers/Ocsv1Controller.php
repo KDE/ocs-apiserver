@@ -994,7 +994,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         list($downloadItems, $downloads) = $this->getPPLoadInfo($project, $pploadApi, $downloads);
         
         $score = $project->laplace_score;
-        $score = $score/100;
+        $score = round($score/100,2);
 
         if ($this->_format == 'json') {
             $response = array(
@@ -1784,7 +1784,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             }
             
             $score = $project->laplace_score;
-            $score = $score/100;
+            $score = round($score/100,2);
 
             if ($this->_format == 'json') {
                 $contentsList[] = array(
