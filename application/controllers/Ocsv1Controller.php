@@ -1600,6 +1600,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     break;
                 case 'high':
                     $tableProjectSelect->order('laplace_score DESC');
+                    $tableProjectSelect->order('project.created_at DESC');
                     break;
                 case 'down':
                     /**
