@@ -1599,7 +1599,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $tableProjectSelect->order('project.title ASC');
                     break;
                 case 'high':
-                    $tableProjectSelect->order(new Zend_Db_Expr('laplace_score(project.count_likes,project.count_dislikes) DESC'));
+                    $tableProjectSelect->order('laplace_score DESC');
                     break;
                 case 'down':
                     /**
