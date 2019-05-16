@@ -192,6 +192,7 @@ class Application_Model_ProjectComments
                 SELECT *
                     FROM comments
                     STRAIGHT_JOIN member ON comments.comment_member_id = member.member_id
+                    JOIN project_rating ON project_rating.comment_id = comments.comment_id
                     WHERE comment_target_id = :project_id
                       AND comment_parent_id = 0
                       AND comment_type = :type_id
