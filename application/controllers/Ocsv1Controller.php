@@ -49,7 +49,7 @@
  *
  * package_types:
  * 1 = AppImage
- * 2 = Android (apk)
+ * 2 = Android (apk)c
  * 3 = OS X compatible
  * 4 = Windows executable
  * 5 = Debian
@@ -995,6 +995,33 @@ class Ocsv1Controller extends Zend_Controller_Action
         
         $score = $project->laplace_score;
         $score = round($score/10,0);
+        
+        $projTags = "";
+        //special for plasma-version-tags
+        if(!empty($project->tags)) {
+            //get File-Tags from Product
+            $fileTagArray = explode($project->tags, ',');
+            //collect tags
+            $projTags = "";
+
+            $tagTable = new Application_Model_Tags();
+            $plasmaversionTags = $tagTable->getAllFilePlasmaVersionTags();
+            foreach ($fileTagArray as $tag) {
+                if(in_array($tag, $plasmaversionTags)) {
+                    $version = null;
+                    $pos = strrpos($version, '-');
+                    if($pos) {
+                        $version = substr($version, $pos+1);
+                    }
+                    $projTags .= "plasma##majorversion=".$version.",";
+                } else {
+                    $projTags .= $tag.",";
+                }
+            }
+
+            $projTags = rtrim($projTags,",");
+        }
+        
 
         if ($this->_format == 'json') {
             $response = array(
@@ -1035,7 +1062,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'video'                => '',
                         'detailpage'           => $previewPage,
                         'ghns_excluded'        => $project->ghns_excluded,
-                        'tags'                 => $project->tags
+                        'tags'                 => $projTags
                     ) + $previewPics + $smallPreviewPics + $downloadItems
                 )
             );
@@ -1091,7 +1118,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'video'                => array('@text' => ''),
                             'detailpage'           => array('@text' => $previewPage),
                             'ghns_excluded'        => array('@text' => $project->ghns_excluded),
-                            'tags'                 => array('@text' => $project->tags)
+                            'tags'                 => array('@text' => $projTags)
                         ) + $previewPics + $smallPreviewPics + $downloadItems
                 )
             );
@@ -1228,6 +1255,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         
         $packageTypeTags = $tagTable->getAllFilePackageTypeTags();
         $architectureTags = $tagTable->getAllFileArchitectureTags();
+        $plasmaversionTags = $tagTable->getAllFilePlasmaVersionTags();
         
         $i = 1;
         foreach ($files as $file) {
@@ -1255,6 +1283,13 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $fileTags .= "application##packagetype=".$tag . ",";
                 } else if(in_array($tag, $architectureTags)) {
                     $fileTags .= "application##architecture=".$tag.",";
+                } else if(in_array($tag, $plasmaversionTags)) {
+                    $version = null;
+                    $pos = strrpos($version, '-');
+                    if($pos) {
+                        $version = substr($version, $pos+1);
+                    }
+                    $fileTags .= "plasma##majorversion=".$version.",";
                 }
             }
 
@@ -1786,6 +1821,32 @@ class Ocsv1Controller extends Zend_Controller_Action
             
             $score = $project->laplace_score;
             $score = round($score/10,0);
+            
+            $projTags = "";
+            //special for plasma-version-tags
+            if(!empty($project->tags)) {
+                //get File-Tags from Product
+                $fileTagArray = explode($project->tags, ',');
+                //collect tags
+                $projTags = "";
+
+                $tagTable = new Application_Model_Tags();
+                $plasmaversionTags = $tagTable->getAllFilePlasmaVersionTags();
+                foreach ($fileTagArray as $tag) {
+                    if(in_array($tag, $plasmaversionTags)) {
+                        $version = null;
+                        $pos = strrpos($version, '-');
+                        if($pos) {
+                            $version = substr($version, $pos+1);
+                        }
+                        $projTags .= "plasma##majorversion=".$version.",";
+                    } else {
+                        $projTags .= $tag.",";
+                    }
+                }
+
+                $projTags = rtrim($projTags,",");
+            }
 
             if ($this->_format == 'json') {
                 $contentsList[] = array(
@@ -1808,7 +1869,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'ghns_excluded' => $project->ghns_excluded,
                         'preview1'    => $previewPage,
                         'detailpage'  => $previewPage,
-                        'tags'        => $project->tags
+                        'tags'        => $projTags
                     ) + $previewPics + $smallPreviewPics + $downloadItems;
             } else {
                 foreach ($previewPics as $key => $value) {
@@ -1842,7 +1903,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'ghns_excluded' => array('@text' => $project->ghns_excluded),
                         'preview1'    => array('@text' => $previewPage),
                         'detailpage'  => array('@text' => $previewPage),
-                        'tags'        => array('@text' => $project->tags)
+                        'tags'        => array('@text' => $projTags)
                     ) + $previewPics + $smallPreviewPics + $downloadItems;
             }
         }
@@ -1886,6 +1947,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
             $packageTypeTags = $tagTable->getAllFilePackageTypeTags();
             $architectureTags = $tagTable->getAllFileArchitectureTags();
+            $plasmaversionTags = $tagTable->getAllFilePlasmaVersionTags();
 
             $fileTags = "";
             foreach ($files as $file) {
@@ -1913,6 +1975,13 @@ class Ocsv1Controller extends Zend_Controller_Action
                         $fileTags .= "application##packagetype=".$tag . ",";
                     } else if(in_array($tag, $architectureTags)) {
                         $fileTags .= "application##architecture=".$tag.",";
+                    } else if(in_array($tag, $plasmaversionTags)) {
+                        $version = null;
+                        $pos = strrpos($version, '-');
+                        if($pos) {
+                            $version = substr($version, $pos+1);
+                        }
+                        $fileTags .= "plasma##majorversion=".$version.",";
                     }
                 }
 

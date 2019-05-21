@@ -179,6 +179,33 @@ class Application_Model_Tags
     /**
      * @return array|null
      */
+    public function getAllFilePlasmaVersionTags()
+    {
+        $playsmavesionTagGroup = Zend_Registry::get('config')->settings->client->default->tag_group_plasmaversion_id;
+        
+        $sql = "
+            select t.tag_name from tag t
+            join tag_group_item tgi on tgi.tag_id = t.tag_id
+            join tag_group tg on tg.group_id = tgi.tag_group_id
+            where tgi.tag_group_id = ".$playsmavesionTagGroup."
+        ";
+
+        $result = $this->getAdapter()->fetchAll($sql);
+        $returnArray = array();
+        if (isset($result)) {
+            foreach ($result as $tag) {
+                $returnArray[] = $tag['tag_name'];
+            }
+            return $returnArray;
+        }
+
+        return null;
+    }
+    
+    
+    /**
+     * @return array|null
+     */
     public function fetchAllFileTagNamesAsArray()
     {
         $sql = "
