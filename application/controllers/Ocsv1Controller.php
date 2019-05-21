@@ -1013,7 +1013,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     if($pos) {
                         $version = substr($version, $pos);
                     }
-                    $projTags .= "plasma##majorversion=".$version.",";
+                    $projTags .= "plasma##majorversion=".$tag.",";
                 } else {
                     $projTags .= $tag.",";
                 }
@@ -1289,7 +1289,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     if($pos) {
                         $version = substr($version, $pos);
                     }
-                    $fileTags .= "plasma##majorversion=".$version.",";
+                    $fileTags .= "plasma##majorversion=".$tag.",";
                 }
             }
 
@@ -1839,7 +1839,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         if($pos) {
                             $version = substr($version, $pos);
                         }
-                        $projTags .= "plasma##majorversion=".$version.",";
+                        $projTags .= "plasma##majorversion=".$tag.",";
                     } else {
                         $projTags .= $tag.",";
                     }
@@ -1981,7 +1981,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         if($pos) {
                             $version = substr($version, $pos);
                         }
-                        $fileTags .= "plasma##majorversion=".$version.",";
+                        $fileTags .= "plasma##majorversion=".$tag.",";
                     }
                 }
 
