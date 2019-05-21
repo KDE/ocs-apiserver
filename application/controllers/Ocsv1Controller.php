@@ -1289,7 +1289,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     if($pos) {
                         $version = substr($tag, $pos);
                     }
-                    $projTags .= "plasma##majorversion=".$version.",";
+                    $fileTags .= "plasma##majorversion=".$version.",";
                 }
             }
 
@@ -1981,7 +1981,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         if($pos) {
                             $version = substr($tag, $pos);
                         }
-                        $projTags .= "plasma##majorversion=".$version.",";
+                        $fileTags .= "plasma##majorversion=".$version.",";
                     }
                 }
 
