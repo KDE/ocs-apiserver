@@ -1000,7 +1000,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         //special for plasma-version-tags
         if(!empty($project->tags)) {
             //get File-Tags from Product
-            $fileTagArray = explode($project->tags, ',');
+            $fileTagArray = explode(',',$project->tags);
             //collect tags
             $projTags = "";
 
@@ -1009,9 +1009,9 @@ class Ocsv1Controller extends Zend_Controller_Action
             foreach ($fileTagArray as $tag) {
                 if(in_array($tag, $plasmaversionTags)) {
                     $version = null;
-                    $pos = strrpos($version, '-');
+                    $pos = strrpos($tag, '-');
                     if($pos) {
-                        $version = substr($version, $pos+1);
+                        $version = substr($tag, $pos+1);
                     }
                     $projTags .= "plasma##majorversion=".$version.",";
                 } else {
@@ -1285,9 +1285,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $fileTags .= "application##architecture=".$tag.",";
                 } else if(in_array($tag, $plasmaversionTags)) {
                     $version = null;
-                    $pos = strrpos($version, '-');
+                    $pos = strrpos($tag, '-');
                     if($pos) {
-                        $version = substr($version, $pos+1);
+                        $version = substr($tag, $pos+1);
                     }
                     $fileTags .= "plasma##majorversion=".$version.",";
                 }
@@ -1826,7 +1826,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             //special for plasma-version-tags
             if(!empty($project->tags)) {
                 //get File-Tags from Product
-                $fileTagArray = explode($project->tags, ',');
+                $fileTagArray = explode(',',$project->tags);
                 //collect tags
                 $projTags = "";
 
@@ -1835,9 +1835,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                 foreach ($fileTagArray as $tag) {
                     if(in_array($tag, $plasmaversionTags)) {
                         $version = null;
-                        $pos = strrpos($version, '-');
+                        $pos = strrpos($tag, '-');
                         if($pos) {
-                            $version = substr($version, $pos+1);
+                            $version = substr($tag, $pos+1);
                         }
                         $projTags .= "plasma##majorversion=".$version.",";
                     } else {
@@ -1977,9 +1977,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                         $fileTags .= "application##architecture=".$tag.",";
                     } else if(in_array($tag, $plasmaversionTags)) {
                         $version = null;
-                        $pos = strrpos($version, '-');
+                        $pos = strrpos($tag, '-');
                         if($pos) {
-                            $version = substr($version, $pos+1);
+                            $version = substr($tag, $pos+1);
                         }
                         $fileTags .= "plasma##majorversion=".$version.",";
                     }
