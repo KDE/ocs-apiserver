@@ -2214,7 +2214,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $this->_sendResponse($response, $this->_format);
         }
 
-        $response['data'] = array('comment' => $this->_buildCommentList($comments->getCurrentItems()));
+        $response['data'] = $this->_buildCommentList($comments->getCurrentItems());
 
         $this->_sendResponse($response, $this->_format);
     }
