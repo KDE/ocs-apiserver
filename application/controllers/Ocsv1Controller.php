@@ -143,10 +143,18 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     protected function _initUriScheme()
     {
+        $this->_uriScheme = 'http';
+
         if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] === '1')) {
             $this->_uriScheme = 'https';
-        } else {
-            $this->_uriScheme = 'http';
+
+            return;
+        }
+
+        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) AND $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+            $this->_uriScheme = 'https';
+
+            return;
         }
     }
 
