@@ -1,8 +1,8 @@
 {
-  "name": "pling/ocs-api",
+  "name": "ocs/ocs-apiserver",
   "description": "",
   "minimum-stability": "dev",
-  "license": "proprietary",
+  "license": "GNU Affero General Public License",
   "authors": [
     {
       "name": "Alexander",
@@ -24,5 +24,7 @@
     }
   },
   "require": {
+    "ext-dom": "*",
+    "ext-ctype": "*"
   }
 }

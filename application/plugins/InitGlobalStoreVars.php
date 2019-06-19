@@ -1,11 +1,12 @@
 <?php
 
 /**
- *  ocs-webserver
  *
- *  Copyright 2016 by pling GmbH.
+ *   ocs-apiserver
  *
- *    This file is part of ocs-webserver.
+ *   Copyright 2016 by pling GmbH.
+ *
+ *    This file is part of ocs-apiserver.
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Affero General Public License as
@@ -19,7 +20,8 @@
  *
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ *
+ */
 class Application_Plugin_InitGlobalStoreVars extends Zend_Controller_Plugin_Abstract
 {
     private static $exceptionThrown = false;
