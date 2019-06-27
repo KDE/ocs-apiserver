@@ -2042,7 +2042,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         $commentList = array();
         foreach ($currentItems as $current_item) {
             if ($this->_format == 'json') {
-                $comment = array('comment' => array(
+                $comment = array(
                     'id'         => $current_item['comment_id'],
                     'subject'    => '',
                     'text'       => Application_Model_HtmlPurify::purify($current_item['comment_text']),
@@ -2050,12 +2050,12 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'user'       => $current_item['username'],
                     'date'       => date('c', strtotime($current_item['comment_created_at'])),
                     'score'      => 0
-                ));
+                );
                 if ($current_item['childcount'] > 0) {
                     $comment['children'] = $this->_buildCommentList($current_item['children']);
                 }
             } else {
-                $comment = array('comment' => array(
+                $comment = array(
                     'id'         => array('@text' => $current_item['comment_id']),
                     'subject'    => array('@text' => ''),
                     'text'       => array('@text' => Application_Model_HtmlPurify::purify($current_item['comment_text'])),
@@ -2063,12 +2063,12 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'user'       => array('@text' => $current_item['username']),
                     'date'       => array('@text' => date('c', strtotime($current_item['comment_created_at']))),
                     'score'      => array('@text' => 0)
-                ));
+                );
                 if ($current_item['childcount'] > 0) {
                     $comment['children'] = $this->_buildCommentList($current_item['children']);
                 }
             }
-            $commentList[] = $comment;
+            $commentList[] = array('comment' => $comment);
         }
 
         return $commentList;
