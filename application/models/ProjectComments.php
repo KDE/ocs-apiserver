@@ -166,7 +166,7 @@ class Application_Model_ProjectComments
      */
     public function getAllCommentsForProject($project_id)
     {
-        $rootElements = $this->getRootCommentsForProject($project_id);
+        $rootElements = $this->getRootCommentsForProjectNew($project_id);
         $returnValue = array();
         foreach ($rootElements as $rootElement) {
             $resultElement = array(array('comment' => $rootElement, 'level' => 1));
@@ -290,7 +290,7 @@ class Application_Model_ProjectComments
     {
         $returnValue = array();
         $level = $element[0]['level'] + 1;
-        $childs = $this->getChildCommentsForId($element[0]['comment']['comment_id']);
+        $childs = $this->getChildCommentsForIdNew($element[0]['comment']['comment_id']);
         if (0 == count($childs)) {
             return null;
         }
