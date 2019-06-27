@@ -2044,8 +2044,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             if ($this->_format == 'json') {
                 $comment = array(
                     'id'         => $current_item['comment_id'],
-                    'subject'    => $current_item['comment_subject'],
-                    'text'       => Application_Model_HtmlPurify::purify($current_item['comment_text_trim']),
+                    'subject'    => '',
+                    'text'       => Application_Model_HtmlPurify::purify($current_item['comment_text']),
                     'childcount' => $current_item['childcount'],
                     'user'       => $current_item['username'],
                     'date'       => date('c', strtotime($current_item['comment_created_at'])),
@@ -2057,8 +2057,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             } else {
                 $comment = array(
                     'id'         => array('@text' => $current_item['comment_id']),
-                    'subject'    => array('@text' => $current_item['comment_subject']),
-                    'text'       => array('@text' => Application_Model_HtmlPurify::purify($current_item['comment_text_trim'])),
+                    'subject'    => array('@text' => ''),
+                    'text'       => array('@text' => Application_Model_HtmlPurify::purify($current_item['comment_text'])),
                     'childcount' => array('@text' => $current_item['childcount']),
                     'user'       => array('@text' => $current_item['username']),
                     'date'       => array('@text' => date('c', strtotime($current_item['comment_created_at']))),
