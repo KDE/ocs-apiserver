@@ -2044,12 +2044,12 @@ class Ocsv1Controller extends Zend_Controller_Action
             if ($this->_format == 'json') {
                 $comment = array(
                     'id'         => $current_item['comment_id'],
-                    'subject'    => '',
-                    'text'       => Application_Model_HtmlPurify::purify($current_item['comment_text']),
+                    'subject'    => $current_item['comment_subject'],
+                    'text'       => Application_Model_HtmlPurify::purify($current_item['comment_text_trim']),
                     'childcount' => $current_item['childcount'],
                     'user'       => $current_item['username'],
                     'date'       => date('c', strtotime($current_item['comment_created_at'])),
-                    'score'      => 0
+                    'score'      => $current_item['comment_score']
                 );
                 if ($current_item['childcount'] > 0) {
                     $comment['children'] = $this->_buildCommentList($current_item['children']);
@@ -2057,12 +2057,12 @@ class Ocsv1Controller extends Zend_Controller_Action
             } else {
                 $comment = array(
                     'id'         => array('@text' => $current_item['comment_id']),
-                    'subject'    => array('@text' => ''),
-                    'text'       => array('@text' => Application_Model_HtmlPurify::purify($current_item['comment_text'])),
+                    'subject'    => array('@text' => $current_item['comment_subject']),
+                    'text'       => array('@text' => Application_Model_HtmlPurify::purify($current_item['comment_text_trim'])),
                     'childcount' => array('@text' => $current_item['childcount']),
                     'user'       => array('@text' => $current_item['username']),
                     'date'       => array('@text' => date('c', strtotime($current_item['comment_created_at']))),
-                    'score'      => array('@text' => 0)
+                    'score'      => array('@text' => $current_item['comment_score'])
                 );
                 if ($current_item['childcount'] > 0) {
                     $comment['children'] = $this->_buildCommentList($current_item['children']);
