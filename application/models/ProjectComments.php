@@ -212,6 +212,74 @@ class Application_Model_ProjectComments
 
         return $rowset;
     }
+    
+    
+    /**
+     * @param int $_projectId
+     *
+     * @return array
+     */
+    public function getRootCommentsForProjectNew($_projectId)
+    {
+        $sql = "
+                SELECT 
+                    case when r.rating_id IS NOT NULL then 
+                            case 
+                                    when r.score = 1 then 'ugh'
+                                    when r.score = 2 then 'really bad'
+                                    when r.score = 3 then 'bad'
+                                    when r.score = 4 then 'soso'
+                                    when r.score = 5 then 'average'
+                                    when r.score = 6 then 'okay'
+                                    when r.score = 7 then 'good'
+                                    when r.score = 8 then 'great'
+                                    when r.score = 9 then 'excellent'
+                                    when r.score = 10 then 'the best'
+                            end
+                    ELSE '' END AS comment_subject
+                    ,case 
+                            when r.rating_id IS NOT NULL then 
+                                    REPLACE(
+                                            REPLACE(REPLACE(REPLACE(c.comment_text,CONCAT(r.score,' '),''),'+',''),'-','')
+                                            ,case 
+                                                    when r.score = 1 then 'ugh'
+                                                    when r.score = 2 then 'really bad'
+                                                    when r.score = 3 then 'bad'
+                                                    when r.score = 4 then 'soso'
+                                                    when r.score = 5 then 'average'
+                                                    when r.score = 6 then 'okay'
+                                                    when r.score = 7 then 'good'
+                                                    when r.score = 8 then 'great'
+                                                    when r.score = 9 then 'excellent'
+                                                    when r.score = 10 then 'the best'
+                                            END
+                                            ,''
+                                    )
+                            ELSE c.comment_text
+                    END AS comment_text_trim
+                    ,case when r.score IS NOT NULL then (r.score*10) ELSE 0 END AS comment_score
+                    , c.*, member.*,r.* FROM comments c
+                    STRAIGHT_JOIN member ON c.comment_member_id = member.member_id
+                    JOIN project_rating r ON r.comment_id = c.comment_id AND r.rating_active = 1
+                    WHERE comment_target_id = :project_id
+                    AND comment_parent_id = 0
+                    AND comment_type = :type_id
+                    AND comment_active = :status
+                    ORDER BY comments.comment_created_at DESC, comment_parent_id
+        ";
+
+        $rowset = $this->_dataTable->getAdapter()->fetchAll($sql, array(
+                'project_id' => $_projectId,
+                'status'     => Application_Model_DbTable_Comments::COMMENT_ACTIVE,
+                'type_id'    => Application_Model_DbTable_Comments::COMMENT_TYPE_PRODUCT
+            ))
+        ;
+        if (0 == count($rowset)) {
+            return array();
+        }
+
+        return $rowset;
+    }
 
     /**
      * @param array $element
@@ -247,6 +315,30 @@ class Application_Model_ProjectComments
     public function getChildCommentsForId($parent_id)
     {
         $sql = "SELECT *
+                    FROM comments
+                    STRAIGHT_JOIN member ON comments.comment_member_id = member.member_id
+                    WHERE comment_parent_id = :parent_id
+                    AND comment_active = :status
+                    ORDER BY comments.comment_created_at, comments.comment_id
+               ";
+        $rowset = $this->_dataTable->getAdapter()->fetchAll($sql,
+            array('parent_id' => $parent_id, 'status' => Application_Model_DbTable_Comments::COMMENT_ACTIVE))
+        ;
+        if (0 == count($rowset)) {
+            return array();
+        }
+
+        return $rowset;
+    }
+    
+    /**
+     * @param int $parent_id
+     *
+     * @return array
+     */
+    public function getChildCommentsForIdNew($parent_id)
+    {
+        $sql = "SELECT '' AS comment_subject,comments.comment_text AS comment_text_trim, 0 as comment_score, comments.*, member.*
                     FROM comments
                     STRAIGHT_JOIN member ON comments.comment_member_id = member.member_id
                     WHERE comment_parent_id = :parent_id
@@ -312,7 +404,7 @@ class Application_Model_ProjectComments
 
     public function getCommentsHierarchic($project_id)
     {
-        $rootElements = $this->getRootCommentsForProject($project_id);
+        $rootElements = $this->getRootCommentsForProjectNew($project_id);
         $returnValue = array();
         foreach ($rootElements as $parentComment) {
             $childs = $this->getChildCommentsHierarchic($parentComment);
@@ -330,7 +422,7 @@ class Application_Model_ProjectComments
 
     protected function getChildCommentsHierarchic($parentComment)
     {
-        $childs = $this->getChildCommentsForId($parentComment['comment_id']);
+        $childs = $this->getChildCommentsForIdNew($parentComment['comment_id']);
         if (0 == count($childs)) {
             return array();
         }
