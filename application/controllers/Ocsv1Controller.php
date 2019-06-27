@@ -2049,7 +2049,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'childcount' => $current_item['childcount'],
                     'user'       => $current_item['username'],
                     'date'       => date('c', strtotime($current_item['comment_created_at'])),
-                    'score'      => $current_item['comment_score']
+                    'score'      => 0
                 );
                 if ($current_item['childcount'] > 0) {
                     $comment['children'] = $this->_buildCommentList($current_item['children']);
@@ -2062,7 +2062,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     'childcount' => array('@text' => $current_item['childcount']),
                     'user'       => array('@text' => $current_item['username']),
                     'date'       => array('@text' => date('c', strtotime($current_item['comment_created_at']))),
-                    'score'      => array('@text' => $current_item['comment_score'])
+                    'score'      => array('@text' => 0)
                 );
                 if ($current_item['childcount'] > 0) {
                     $comment['children'] = $this->_buildCommentList($current_item['children']);
