@@ -265,7 +265,7 @@ class Application_Model_ProjectComments
                     AND comment_parent_id = 0
                     AND comment_type = :type_id
                     AND comment_active = :status
-                    ORDER BY comments.comment_created_at DESC, comment_parent_id
+                    ORDER BY comment_created_at DESC, comment_parent_id
         ";
 
         $rowset = $this->_dataTable->getAdapter()->fetchAll($sql, array(
