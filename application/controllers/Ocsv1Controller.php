@@ -215,7 +215,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (Zend_Registry::get('config')->settings->client->special->mapping_active == true) {
             $mapping = Zend_Registry::get('config')->settings->client->special->mapping->toArray();
 
-            $webSite = $mapping[$_SERVER['SERVER_NAME']] ? $mapping[$_SERVER['SERVER_NAME']] : $webSite;
+            $webSite = isset($mapping[$_SERVER['SERVER_NAME']]) ? $mapping[$_SERVER['SERVER_NAME']] : $webSite;
         }
 
         $this->_config = array(
