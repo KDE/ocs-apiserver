@@ -1,5 +1,27 @@
 <?php
 
+/**
+ *
+ *   ocs-apiserver
+ *
+ *   Copyright 2016 by pling GmbH.
+ *
+ *    This file is part of ocs-apiserver.
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 {
     /**
@@ -15,34 +37,19 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         /** $config Zend_Config */
         $config = $this->getApplication()->getApplicationConfig();
         Zend_Registry::set('config', $config);
+
         return $config;
     }
 
     /**
-     * @throws Zend_Log_Exception
+     * @throws Zend_Application_Bootstrap_Exception
      */
-    protected function _initLog()
+    protected function _initLogger()
     {
-        $settings = $this->getOption('settings');
-        $log = new Zend_Log();
-
-        $writer = new Zend_Log_Writer_Stream($settings['log']['path'] . 'all_' . date("Y-m-d"));
-        $writer->addFilter(new Local_Log_Filter_MinMax(Zend_Log::WARN, Zend_Log::INFO));
-
-        $log->addWriter($writer);
-
-        $errorWriter = new Zend_Log_Writer_Stream($settings['log']['path'] . 'err_' . date('Y-m-d'));
-        $errorWriter->addFilter(new Zend_Log_Filter_Priority(Zend_Log::ERR));
-
-        $log->addWriter($errorWriter);
-
-        Zend_Registry::set('logger', $log);
-
-        if (APPLICATION_ENV == 'development') {
-            $firebugWriter = new Zend_Log_Writer_Firebug();
-            $firebugLog = new Zend_Log($firebugWriter);
-            Zend_Registry::set('firebug_log', $firebugLog);
-        }
+        /** @var Zend_Log $logger */
+        $logger = $this->getPluginResource('log')->getLog();
+        $logger->registerErrorHandler();
+        Zend_Registry::set('logger', $logger);
     }
 
     /**
@@ -163,6 +170,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         }
 
         $this->getContainer()->frontcontroller->setRouter($this->_router);
+
         return $this->_router;
     }
 
