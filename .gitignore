@@ -3,6 +3,8 @@ local/*
 *.local*
 .htpasswd*
 .htaccess*
+.docker_init
+Dockerfile.stage
 
 .idea*
 .vagrant*
@@ -185,3 +187,4 @@ $RECYCLE.BIN/
 .idea*
 .vagrant*
 /nbproject/private/
+
