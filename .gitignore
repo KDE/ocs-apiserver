@@ -3,6 +3,8 @@ local/*
 *.local*
 .htpasswd*
 .htaccess*
+.docker_init
+Dockerfile.stage
 
 # Created by https://www.gitignore.io/api/phpstorm
 
@@ -76,3 +78,4 @@ fabric.properties
 .idea*
 .vagrant*
 /nbproject/private/
+
