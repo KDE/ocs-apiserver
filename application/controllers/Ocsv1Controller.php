@@ -556,8 +556,13 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function persondataAction($self = false)
     {
+        $showAll = false;
         if (!$this->_authenticateUser()) {
-            $this->_sendErrorResponse(101, 'person not found');
+            //See Ticket: https://phabricator.kde.org/T11173: we should show some data insead of an error
+            //$this->_sendErrorResponse(101, 'person not found');
+            $showAll = false;
+        } else {
+            $showAll = true;
         }
 
         $tableMember = new Application_Model_Member();
@@ -579,20 +584,14 @@ class Ocsv1Controller extends Zend_Controller_Action
             }
 
             $profilePage = $this->_uriScheme . '://' . $this->_config['user_host'] . '/member/' . $member->member_id;
-
-            if ($this->_format == 'json') {
-                $response = array(
-                    'status'     => 'ok',
-                    'statuscode' => 100,
-                    'message'    => '',
-                    'data'       => array(
-                        array(
-                            'details'              => 'full',
+            
+            $userData = array(
+                            'details'              => $showAll?'full':'summary',
                             'personid'             => $member->username,
                             'privacy'              => 0,
                             'privacytext'          => 'public',
                             'firstname'            => $member->firstname,
-                            'lastname'             => $member->lastname,
+                            'lastname'             => $showAll?$member->lastname:'',
                             'gender'               => '',
                             'communityrole'        => '',
                             'homepage'             => $member->link_website,
@@ -603,8 +602,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'bigavatarpicfound'    => true,
                             'birthday'             => '',
                             'jobstatus'            => '',
-                            'city'                 => $member->city,
-                            'country'              => $member->country,
+                            'city'                 => $showAll?$member->city:'',
+                            'country'              => $showAll?$member->country:'',
                             'latitude'             => '',
                             'longitude'            => '',
                             'ircnick'              => '',
@@ -621,26 +620,27 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'favouritemovies'      => '',
                             'favouritebooks'       => '',
                             'favouritegames'       => '',
-                            'description'          => $member->biography,
+                            'description'          => $showAll?$member->biography:'',
                             'profilepage'          => $profilePage
-                        )
+                        );
+
+            if ($this->_format == 'json') {
+                $response = array(
+                    'status'     => 'ok',
+                    'statuscode' => 100,
+                    'message'    => '',
+                    'data'       => array(
+                        $userData
                     )
                 );
             } else {
-                $response = array(
-                    'meta' => array(
-                        'status'     => array('@text' => 'ok'),
-                        'statuscode' => array('@text' => 100),
-                        'message'    => array('@text' => '')
-                    ),
-                    'data' => array(
-                        'person' => array(
+                $userData = array(
                             'details'              => 'full',
                             'personid'             => array('@text' => $member->username),
                             'privacy'              => array('@text' => 0),
                             'privacytext'          => array('@text' => 'public'),
                             'firstname'            => array('@text' => $member->firstname),
-                            'lastname'             => array('@text' => $member->lastname),
+                            'lastname'             => array('@text' => $showAll?$member->lastname:''),
                             'gender'               => array('@text' => ''),
                             'communityrole'        => array('@text' => ''),
                             'homepage'             => array('@text' => $member->link_website),
@@ -651,8 +651,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'bigavatarpicfound'    => array('@text' => true),
                             'birthday'             => array('@text' => ''),
                             'jobstatus'            => array('@text' => ''),
-                            'city'                 => array('@text' => $member->city),
-                            'country'              => array('@text' => $member->country),
+                            'city'                 => array('@text' => $showAll?$member->city:''),
+                            'country'              => array('@text' => $showAll?$member->country:''),
                             'latitude'             => array('@text' => ''),
                             'longitude'            => array('@text' => ''),
                             'ircnick'              => array('@text' => ''),
@@ -669,9 +669,19 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'favouritemovies'      => array('@text' => ''),
                             'favouritebooks'       => array('@text' => ''),
                             'favouritegames'       => array('@text' => ''),
-                            'description'          => array('@text' => $member->biography),
+                            'description'          => array('@text' => $showAll?$member->biography:''),
                             'profilepage'          => array('@text' => $profilePage)
-                        )
+                        );
+                
+                
+                $response = array(
+                    'meta' => array(
+                        'status'     => array('@text' => 'ok'),
+                        'statuscode' => array('@text' => 100),
+                        'message'    => array('@text' => '')
+                    ),
+                    'data' => array(
+                        'person' => $userData
                     )
                 );
             }
@@ -679,6 +689,12 @@ class Ocsv1Controller extends Zend_Controller_Action
             $this->_sendResponse($response, $this->_format);
         } // Find a specific list of persons
         else {
+            //Only auth users can search here
+            if(!$showAll) {
+                $this->_sendErrorResponse(101, 'data is private');
+            }
+            
+            
             $limit = 10; // 1 - 100
             $offset = 0;
 
