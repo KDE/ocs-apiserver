@@ -635,7 +635,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 );
             } else {
                 $userData = array(
-                            'details'              => 'full',
+                            'details'              => $showAll?'full':'summary',
                             'personid'             => array('@text' => $member->username),
                             'privacy'              => array('@text' => 0),
                             'privacytext'          => array('@text' => 'public'),
