@@ -583,7 +583,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $this->_sendErrorResponse(101, 'person not found');
             }
 
-            $profilePage = $this->_uriScheme . '://' . $this->_config['user_host'] . '/member/' . $member->member_id;
+            $profilePage = $this->_uriScheme . '://' . $this->_config['user_host'] . '/u/' . $member->username;
             
             $userData = array(
                             'details'              => $showAll?'full':'summary',
