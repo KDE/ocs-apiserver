@@ -124,7 +124,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         'host'       => 'www.opendesktop.org',
         'contact'    => 'contact@opendesktop.org',
         'ssl'        => true,
-        'user_host'  => 'pling.com'
+        'user_host'  => 'www.pling.com'
     );
 
     protected $_params = array();
