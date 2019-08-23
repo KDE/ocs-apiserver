@@ -584,6 +584,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             }
 
             $profilePage = $this->_uriScheme . '://' . $this->_config['user_host'] . '/u/' . $member->username;
+            $avatarUrl = $this->_uriScheme . '://' . $this->_config['user_host'] . '/member/avatar/'. md5($member->mail);
             
             $userData = array(
                             'details'              => $showAll?'full':'summary',
@@ -596,9 +597,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'communityrole'        => '',
                             'homepage'             => $member->link_website,
                             'company'              => '',
-                            'avatarpic'            => $member->profile_image_url,
+                            'avatarpic'            => $avatarUrl,
                             'avatarpicfound'       => true,
-                            'bigavatarpic'         => $member->profile_image_url,
+                            'bigavatarpic'         => $avatarUrl,
                             'bigavatarpicfound'    => true,
                             'birthday'             => '',
                             'jobstatus'            => '',
@@ -645,9 +646,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'communityrole'        => array('@text' => ''),
                             'homepage'             => array('@text' => $member->link_website),
                             'company'              => array('@text' => ''),
-                            'avatarpic'            => array('@text' => $member->profile_image_url),
+                            'avatarpic'            => array('@text' => $avatarUrl),
                             'avatarpicfound'       => array('@text' => true),
-                            'bigavatarpic'         => array('@text' => $member->profile_image_url),
+                            'bigavatarpic'         => array('@text' => $avatarUrl),
                             'bigavatarpicfound'    => array('@text' => true),
                             'birthday'             => array('@text' => ''),
                             'jobstatus'            => array('@text' => ''),
