@@ -124,7 +124,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         'host'       => 'www.opendesktop.org',
         'contact'    => 'contact@opendesktop.org',
         'ssl'        => true,
-        'user_host'  => 'pling.me'
+        'user_host'  => 'www.pling.com'
     );
 
     protected $_params = array();
@@ -583,7 +583,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $this->_sendErrorResponse(101, 'person not found');
             }
 
-            $profilePage = $this->_uriScheme . '://' . $this->_config['user_host'] . '/member/' . $member->member_id;
+            $profilePage = $this->_uriScheme . '://' . $this->_config['user_host'] . '/u/' . $member->username;
+            $avatarUrl = $this->_uriScheme . '://' . $this->_config['user_host'] . '/member/avatar/'. md5($member->mail).'/800';
             
             $userData = array(
                             'details'              => $showAll?'full':'summary',
@@ -596,10 +597,10 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'communityrole'        => '',
                             'homepage'             => $member->link_website,
                             'company'              => '',
-                            'avatarpic'            => $member->profile_image_url,
-                            'avatarpicfound'       => true,
-                            'bigavatarpic'         => $member->profile_image_url,
-                            'bigavatarpicfound'    => true,
+                            'avatarpic'            => $avatarUrl,
+                            'avatarpicfound'       => 1,
+                            'bigavatarpic'         => $avatarUrl,
+                            'bigavatarpicfound'    => 1,
                             'birthday'             => '',
                             'jobstatus'            => '',
                             'city'                 => $showAll?$member->city:'',
@@ -635,7 +636,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 );
             } else {
                 $userData = array(
-                            'details'              => 'full',
+                            'details'              => $showAll?'full':'summary',
                             'personid'             => array('@text' => $member->username),
                             'privacy'              => array('@text' => 0),
                             'privacytext'          => array('@text' => 'public'),
@@ -645,10 +646,10 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'communityrole'        => array('@text' => ''),
                             'homepage'             => array('@text' => $member->link_website),
                             'company'              => array('@text' => ''),
-                            'avatarpic'            => array('@text' => $member->profile_image_url),
-                            'avatarpicfound'       => array('@text' => true),
-                            'bigavatarpic'         => array('@text' => $member->profile_image_url),
-                            'bigavatarpicfound'    => array('@text' => true),
+                            'avatarpic'            => array('@text' => $avatarUrl),
+                            'avatarpicfound'       => array('@text' => 1),
+                            'bigavatarpic'         => array('@text' => $avatarUrl),
+                            'bigavatarpicfound'    => array('@text' => 1),
                             'birthday'             => array('@text' => ''),
                             'jobstatus'            => array('@text' => ''),
                             'city'                 => array('@text' => $showAll?$member->city:''),
@@ -1533,6 +1534,15 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         if (!empty($this->_params['distribution'])) {
             // distribution parameter: comma separated list of ids
+        }
+        
+        if (!empty($this->_params['showfavorites'])) {
+            // if = 1 then show auth users favorites
+            if($this->_params['showfavorites'] == 1 && null != $this->_authData) {
+                $member_id = $this->_authData->member_id;
+                $tableProjectSelect->where('project_follower.member_id = ?', $member_id);
+                $tableProjectSelect->setIntegrityCheck(false)->join('project_follower', 'project.project_id = project_follower.project_id', array('project_follower_id'));
+        }
         }
 
         if (!empty($this->_params['license'])) {
