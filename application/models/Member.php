@@ -46,29 +46,33 @@ class Application_Model_Member extends Application_Model_DbTable_Member
 
 
     /**
-     * @param int $member_id
+     * @param int  $member_id
+     *
+     * @param bool $onlyNotDeleted
      *
      * @return Zend_Db_Table_Row
+     * @throws Zend_Db_Statement_Exception
      */
-    public function fetchMemberData($member_id)
+    public function fetchMemberData($member_id, $onlyNotDeleted = true)
     {
         if (null === $member_id) {
             return null;
         }
 
         $sql = '
-                SELECT 
-                    `member`.*
-                FROM
-                    `member`
+                SELECT `m`.*, `member_email`.`email_address` AS `mail`, IF(ISNULL(`member_email`.`email_checked`),0,1) AS `mail_checked`, `member_email`.`email_address`, `mei`.`external_id`, `mei`.`gitlab_user_id`
+                FROM `member` AS `m`
+                JOIN `member_email` ON `m`.`member_id` = `member_email`.`email_member_id` AND `member_email`.`email_primary` = 1
+                LEFT JOIN `member_external_id` AS `mei` ON `mei`.`member_id` = `m`.`member_id`
                 WHERE
-                    (member_id = :memberId) AND (is_deleted = :deletedVal)
+                    (`m`.`member_id` = :memberId)
         ';
 
-        $result =
-            $this->getAdapter()->query($sql, array('memberId' => $member_id, 'deletedVal' => self::MEMBER_NOT_DELETED))
-                 ->fetch()
-        ;
+        if ($onlyNotDeleted) {
+            $sql .= " AND (m.is_deleted = " . self::MEMBER_NOT_DELETED . ")";
+        }
+
+        $result = $this->getAdapter()->query($sql, array('memberId' => $member_id))->fetch();
 
         $classRow = $this->getRowClass();
 
