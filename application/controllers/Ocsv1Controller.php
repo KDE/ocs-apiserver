@@ -1537,6 +1537,13 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
         
         if (!empty($this->_params['showfavorites'])) {
+            $auth = Zend_Auth::getInstance();
+            $authData = $auth->getStorage()->read();
+            
+            if(!isset($this->_authData) && isset($authData)) {
+                $this->_authData = $authData;
+            }
+            
             // if = 1 then show auth users favorites
             if($this->_params['showfavorites'] == 1 && null != $this->_authData) {
                 $member_id = $this->_authData->member_id;
