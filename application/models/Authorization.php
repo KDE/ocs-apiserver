@@ -94,7 +94,7 @@ class Application_Model_Authorization
      */
     protected function authenticateCredentials($identity, $credential, $loginMethod = null)
     {
-        $authAdapter = Local_Auth_AdapterFactory::getAuthAdapter($identity, $loginMethod);
+        $authAdapter = Local_Auth_AdapterFactory::getAuthAdapter($identity, $credential, $loginMethod);
         $authAdapter->setIdentity($identity);
         $authAdapter->setCredential($credential);
         $authResult = $authAdapter->authenticate();
