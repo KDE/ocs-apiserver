@@ -53,7 +53,7 @@ class Local_Auth_AdapterFactory
      */
     protected static function detectHashMethod($identity, $credential)
     {
-        //$modelMember = new Default_Model_Member();
+        //$modelMember = new Application_Model_Member();
         //$memberData = $modelMember->findActiveMemberByIdentity($identity, $credential);
         $validator = new Zend_Validate_EmailAddress();
         if ($validator->isValid($identity)) {
@@ -63,8 +63,8 @@ class Local_Auth_AdapterFactory
         }
 
         $memberData = Zend_Db_Table::getDefaultAdapter()->fetchRow($sql, array('identity' => $identity,
-                                                                               'passHive' => Local_Auth_Adapter_Ocs::getEncryptedPassword($credential, Default_Model_DbTable_Member::PASSWORD_TYPE_HIVE),
-                                                                               'passOcs' => Local_Auth_Adapter_Ocs::getEncryptedPassword($credential, Default_Model_DbTable_Member::PASSWORD_TYPE_OCS)
+                                                                               'passHive' => Local_Auth_Adapter_Ocs::getEncryptedPassword($credential, Application_Model_DbTable_Member::PASSWORD_TYPE_HIVE),
+                                                                               'passOcs' => Local_Auth_Adapter_Ocs::getEncryptedPassword($credential, Application_Model_DbTable_Member::PASSWORD_TYPE_OCS)
             )
         );
 
@@ -72,7 +72,7 @@ class Local_Auth_AdapterFactory
             return self::LOGIN_DEFAULT;
         }
 
-        if (Default_Model_Member::PASSWORD_TYPE_HIVE == $memberData['password_type']) {
+        if (Application_Model_Member::PASSWORD_TYPE_HIVE == $memberData['password_type']) {
             return self::LOGIN_HIVE;
         }
         //if ($modelMember->isHiveUser($memberData)) {

@@ -20,7 +20,7 @@
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
-class Default_Model_RememberMe
+class Application_Model_RememberMe
 {
 
     protected $salt = 'slkdmclskdaruiowrjasndf224323423rwersdf§$%ZTFG§EWRSGFSD!§RWESFD';
@@ -29,7 +29,7 @@ class Default_Model_RememberMe
     protected $request;
     /** @var string */
     protected $dataTableName;
-    /** @var  Default_Model_DbTable_Comments */
+    /** @var  Application_Model_DbTable_Comments */
     protected $dataTable;
     /** @var  string */
     protected $cookieName;
@@ -51,7 +51,7 @@ class Default_Model_RememberMe
      * @throws Zend_Exception
      * @link http://php.net/manual/en/language.oop5.decon.php
      */
-    public function __construct($_dataTableName = 'Default_Model_DbTable_Session')
+    public function __construct($_dataTableName = 'Application_Model_DbTable_Session')
     {
         $this->request = Zend_Controller_Front::getInstance()->getRequest();
 

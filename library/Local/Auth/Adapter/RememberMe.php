@@ -131,9 +131,9 @@ class Local_Auth_Adapter_RememberMe implements Local_Auth_Adapter_Interface
 
         $this->_db->getProfiler()->setEnabled(true);
         $resultSet = $this->_db->fetchAll($sql, array(
-            'active'  => Default_Model_DbTable_Member::MEMBER_ACTIVE,
-            'deleted' => Default_Model_DbTable_Member::MEMBER_NOT_DELETED,
-            'login'   => Default_Model_DbTable_Member::MEMBER_LOGIN_LOCAL,
+            'active'  => Application_Model_DbTable_Member::MEMBER_ACTIVE,
+            'deleted' => Application_Model_DbTable_Member::MEMBER_NOT_DELETED,
+            'login'   => Application_Model_DbTable_Member::MEMBER_LOGIN_LOCAL,
             'member'  => $this->_identity,
             'uuid'    => $this->_credential
         ));

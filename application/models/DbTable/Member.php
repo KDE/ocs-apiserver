@@ -20,7 +20,7 @@
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
-class Default_Model_DbTable_Member extends Local_Model_Table
+class Application_Model_DbTable_Member extends Local_Model_Table
 {
 
     const MEMBER_ACTIVE = 1;
@@ -52,17 +52,17 @@ class Default_Model_DbTable_Member extends Local_Model_Table
 
     protected $_name = "member";
 
-    protected $_dependentTables = array('Default_Model_Project');
+    protected $_dependentTables = array('Application_Model_Project');
 
     protected $_referenceMap = array(
         'Owner' => array(
             'columns'       => 'member_id',
-            'refTableClass' => 'Default_Model_Project',
+            'refTableClass' => 'Application_Model_Project',
             'refColumns'    => 'member_id'
         ),
         'Email' => array(
             'columns'       => 'member_id',
-            'refTableClass' => 'Default_Model_DbTable_MemberEmail',
+            'refTableClass' => 'Application_Model_DbTable_MemberEmail',
             'refColums'     => 'email_member_id'
         )
     );

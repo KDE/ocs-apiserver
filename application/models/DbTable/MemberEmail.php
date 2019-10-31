@@ -20,7 +20,7 @@
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
-class Default_Model_DbTable_MemberEmail extends Local_Model_Table
+class Application_Model_DbTable_MemberEmail extends Local_Model_Table
 {
 
     const EMAIL_DELETED = 1;
@@ -106,7 +106,7 @@ class Default_Model_DbTable_MemberEmail extends Local_Model_Table
      */
     public function setDeleted($member_id, $identifer)
     {
-        $memberLog = new Default_Model_MemberDeactivationLog();
+        $memberLog = new Application_Model_MemberDeactivationLog();
         $memberLog->logMemberEmailAsDeleted($member_id, $identifer);
 
         return $this->delete($identifer);
@@ -157,7 +157,7 @@ class Default_Model_DbTable_MemberEmail extends Local_Model_Table
      */
     public function setActive($member_id, $identifer)
     {
-        $memberLog = new Default_Model_MemberDeactivationLog();
+        $memberLog = new Application_Model_MemberDeactivationLog();
         $memberLog->removeLogMemberEmailAsDeleted($member_id, $identifer);
 
         return $this->activate($identifer);

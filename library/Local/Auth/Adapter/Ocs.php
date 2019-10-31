@@ -64,7 +64,7 @@ class Local_Auth_Adapter_Ocs implements Local_Auth_Adapter_Interface
      */
     public static function getEncryptedPassword($password, $passwordType)
     {
-        return $passwordType == Default_Model_DbTable_Member::PASSWORD_TYPE_HIVE
+        return $passwordType == Application_Model_DbTable_Member::PASSWORD_TYPE_HIVE
             ? sha1((self::PASSWORDSALT . $password . self::PASSWORDSALT))
             : md5($password);
     }
@@ -141,17 +141,17 @@ class Local_Auth_Adapter_Ocs implements Local_Auth_Adapter_Interface
 
         $this->_db->getProfiler()->setEnabled(true);
         $resultSet = $this->_db->fetchAll($sql, array(
-            'active'           => Default_Model_DbTable_Member::MEMBER_ACTIVE,
-            'deleted'          => Default_Model_DbTable_Member::MEMBER_NOT_DELETED,
-            'login'            => Default_Model_DbTable_Member::MEMBER_LOGIN_LOCAL,
+            'active'           => Application_Model_DbTable_Member::MEMBER_ACTIVE,
+            'deleted'          => Application_Model_DbTable_Member::MEMBER_NOT_DELETED,
+            'login'            => Application_Model_DbTable_Member::MEMBER_LOGIN_LOCAL,
             'mail'             => $this->_identity,
             'user_deactivated' => $this::EMAIL_DEACTIVATED,
             'pwd'              => $this->_credential
         ));
 
-        $sql = str_replace(':active', Default_Model_DbTable_Member::MEMBER_ACTIVE, $sql);
-        $sql = str_replace(':deleted', Default_Model_DbTable_Member::MEMBER_NOT_DELETED, $sql);
-        $sql = str_replace(':login', "'" . Default_Model_DbTable_Member::MEMBER_LOGIN_LOCAL . "'", $sql);
+        $sql = str_replace(':active', Application_Model_DbTable_Member::MEMBER_ACTIVE, $sql);
+        $sql = str_replace(':deleted', Application_Model_DbTable_Member::MEMBER_NOT_DELETED, $sql);
+        $sql = str_replace(':login', "'" . Application_Model_DbTable_Member::MEMBER_LOGIN_LOCAL . "'", $sql);
         $sql = str_replace(':mail', "'" . $this->_identity . "'", $sql);
         $sql = str_replace(':pwd', "'" . $this->_credential . "'", $sql);
 
@@ -188,17 +188,17 @@ class Local_Auth_Adapter_Ocs implements Local_Auth_Adapter_Interface
 
         $this->_db->getProfiler()->setEnabled(true);
         $resultSet = $this->_db->fetchAll($sql, array(
-            'active'           => Default_Model_DbTable_Member::MEMBER_ACTIVE,
-            'deleted'          => Default_Model_DbTable_Member::MEMBER_NOT_DELETED,
-            'login'            => Default_Model_DbTable_Member::MEMBER_LOGIN_LOCAL,
+            'active'           => Application_Model_DbTable_Member::MEMBER_ACTIVE,
+            'deleted'          => Application_Model_DbTable_Member::MEMBER_NOT_DELETED,
+            'login'            => Application_Model_DbTable_Member::MEMBER_LOGIN_LOCAL,
             'username'         => $this->_identity,
             'user_deactivated' => $this::USER_DEACTIVATED,
             'pwd'              => $this->_credential
         ));
 
-        $sql = str_replace(':active', Default_Model_DbTable_Member::MEMBER_ACTIVE, $sql);
-        $sql = str_replace(':deleted', Default_Model_DbTable_Member::MEMBER_NOT_DELETED, $sql);
-        $sql = str_replace(':login', "'" . Default_Model_DbTable_Member::MEMBER_LOGIN_LOCAL . "'", $sql);
+        $sql = str_replace(':active', Application_Model_DbTable_Member::MEMBER_ACTIVE, $sql);
+        $sql = str_replace(':deleted', Application_Model_DbTable_Member::MEMBER_NOT_DELETED, $sql);
+        $sql = str_replace(':login', "'" . Application_Model_DbTable_Member::MEMBER_LOGIN_LOCAL . "'", $sql);
         $sql = str_replace(':username', "'" . $this->_identity . "'", $sql);
         $sql = str_replace(':user_deactivated', "'" . $this::USER_DEACTIVATED . "'", $sql);
         $sql = str_replace(':pwd', "'" . $this->_credential . "'", $sql);

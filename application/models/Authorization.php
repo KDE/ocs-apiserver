@@ -20,7 +20,7 @@
  *    You should have received a copy of the GNU Affero General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
-class Default_Model_Authorization
+class Application_Model_Authorization
 {
 
     const LOGIN_REMEMBER_ME = 'infinity';
@@ -38,7 +38,7 @@ class Default_Model_Authorization
     /**
      * @param string $_dataModelName
      */
-    function __construct($_dataModelName = 'Default_Model_DbTable_Member')
+    function __construct($_dataModelName = 'Application_Model_DbTable_Member')
     {
         $this->_dataModelName = $_dataModelName;
         $this->_dataTable = new $this->_dataModelName;
@@ -58,7 +58,7 @@ class Default_Model_Authorization
         Zend_Session::forgetMe();
         //        Zend_Session::destroy();
 
-        $modelRememberMe = new Default_Model_RememberMe();
+        $modelRememberMe = new Application_Model_RememberMe();
         $modelRememberMe->deleteSession();
     }
 
@@ -122,7 +122,7 @@ class Default_Model_Authorization
      */
     public function updateRememberMe($setRememberMe = false)
     {
-        $modelRememberMe = new Default_Model_RememberMe();
+        $modelRememberMe = new Application_Model_RememberMe();
         if (false == $setRememberMe) {
             $modelRememberMe->deleteSession();
 
@@ -157,7 +157,7 @@ class Default_Model_Authorization
     {
         $extendedAuthUserData = new stdClass();
         if (isset($this->_loginMethod) AND $this->_loginMethod == self::LOGIN_REMEMBER_ME) {
-            $modelMember = new Default_Model_Member();
+            $modelMember = new Application_Model_Member();
             $memberData = $modelMember->fetchMemberData($authUserData->member_id);
             $extendedAuthUserData->external_id = $memberData->external_id;
             $extendedAuthUserData->username = $memberData->username;
@@ -359,7 +359,7 @@ class Default_Model_Authorization
      */
     public function removeAllCookieInformation($identifier, $identity)
     {
-        $dataTable = new Default_Model_DbTable_Session();
+        $dataTable = new Application_Model_DbTable_Session();
         $where = $dataTable->getAdapter()->quoteInto($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?', $identity);
 
         return $dataTable->delete($where);

@@ -22,18 +22,18 @@
  *
  *    Created: 22.09.2016
  **/
-class Default_Model_MemberEmail
+class Application_Model_MemberEmail
 {
     const CASE_INSENSITIVE = 1;
     /** @var string */
     protected $_dataTableName;
-    /** @var  Default_Model_DbTable_MemberEmail */
+    /** @var  Application_Model_DbTable_MemberEmail */
     protected $_dataTable;
 
     /**
      * @inheritDoc
      */
-    public function __construct($_dataTableName = 'Default_Model_DbTable_MemberEmail')
+    public function __construct($_dataTableName = 'Application_Model_DbTable_MemberEmail')
     {
         $this->_dataTableName = $_dataTableName;
         $this->_dataTable = new $this->_dataTableName;
@@ -49,8 +49,8 @@ class Default_Model_MemberEmail
      */
     public function fetchAllMailAddresses($member_id, $email_deleted = false)
     {
-        $deleted = $email_deleted === true ? Default_Model_DbTable_MemberEmail::EMAIL_DELETED
-            : Default_Model_DbTable_MemberEmail::EMAIL_NOT_DELETED;
+        $deleted = $email_deleted === true ? Application_Model_DbTable_MemberEmail::EMAIL_DELETED
+            : Application_Model_DbTable_MemberEmail::EMAIL_NOT_DELETED;
         $sql =
             "SELECT * FROM {$this->_dataTable->info('name')} WHERE `email_member_id` = :memberId AND `email_deleted` = :emailDeleted";
         $stmnt = $this->_dataTable->getAdapter()->query($sql, array('memberId' => $member_id, 'emailDeleted' => $deleted));
@@ -72,7 +72,6 @@ class Default_Model_MemberEmail
         $result = $this->resetDefaultMailAddress($member_id);
         $this->_dataTable->setPrimary($emailId);
         $this->updateMemberPrimaryMail($member_id); /* if we change the mail in member table, we change the login. */
-        Default_Model_ActivityLog::logActivity($member_id, null, $member_id, Default_Model_ActivityLog::MEMBER_EMAIL_CHANGED);
 
         return true;
     }
@@ -127,7 +126,7 @@ class Default_Model_MemberEmail
      */
     protected function saveMemberPrimaryMail($member_id, $dataEmail)
     {
-        $modelMember = new Default_Model_Member();
+        $modelMember = new Application_Model_Member();
         $dataMember = $modelMember->fetchMemberData($member_id);
         $dataMember->mail = $dataEmail['email_address'];
         $dataMember->mail_checked = isset($dataEmail['email_checked']) ? 1 : 0;
@@ -165,10 +164,7 @@ class Default_Model_MemberEmail
         $data['email_address'] = $user_mail;
         $data['email_hash'] = md5($user_mail);
         $data['email_verification_value'] =
-            empty($user_verification) ? Default_Model_MemberEmail::getVerificationValue($user_id, $user_mail) : $user_verification;
-
-        Default_Model_ActivityLog::logActivity($user_id, null, $user_id, Default_Model_ActivityLog::MEMBER_EMAIL_CHANGED,
-            array('description' => 'user saved new mail address: ' . $user_mail));
+            empty($user_verification) ? Application_Model_MemberEmail::getVerificationValue($user_id, $user_mail) : $user_verification;
 
         return $this->_dataTable->save($data);
     }
@@ -213,17 +209,14 @@ class Default_Model_MemberEmail
         $data['email_hash'] = MD5($user_mail);
         $data['email_checked'] = $user_mail_checked == 1 ? new Zend_Db_Expr('Now()') : new Zend_Db_Expr('NULL');
         $data['email_verification_value'] =
-            empty($user_verification) ? Default_Model_MemberEmail::getVerificationValue($user_id, $user_mail) : $user_verification;
-        $data['email_primary'] = Default_Model_DbTable_MemberEmail::EMAIL_PRIMARY;
+            empty($user_verification) ? Application_Model_MemberEmail::getVerificationValue($user_id, $user_mail) : $user_verification;
+        $data['email_primary'] = Application_Model_DbTable_MemberEmail::EMAIL_PRIMARY;
 
         $result = $this->_dataTable->save($data);
 
         $this->resetOtherPrimaryEmail($user_id, $user_mail);
 
         $this->updateMemberPrimaryMail($user_id);
-
-        Default_Model_ActivityLog::logActivity($user_id, null, $user_id, Default_Model_ActivityLog::MEMBER_EMAIL_CHANGED,
-            array('description' => 'user saved new primary mail address: ' . $user_mail));
 
         return $result;
     }
