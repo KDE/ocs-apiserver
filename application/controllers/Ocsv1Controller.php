@@ -1545,8 +1545,9 @@ class Ocsv1Controller extends Zend_Controller_Action
             }
             
             // if = 1 then show auth users favorites
-            if($this->_params['showfavorites'] == 1 && null != $this->_authData) {
-                $member_id = $this->_authData->member_id;
+            if($this->_params['showfavorites'] == 1 /*&& null != $this->_authData*/) {
+                //$member_id = $this->_authData->member_id;
+                $member_id = 375449;
                 $tableProjectSelect->where('project_follower.member_id = ?', $member_id);
                 $tableProjectSelect->setIntegrityCheck(false)->join('project_follower', 'project.project_id = project_follower.project_id', array('project_follower_id'));
             }
