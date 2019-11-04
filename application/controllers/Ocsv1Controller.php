@@ -1536,7 +1536,6 @@ class Ocsv1Controller extends Zend_Controller_Action
             // distribution parameter: comma separated list of ids
         }
         
-        /*
         if (!empty($this->_params['showfavorites'])) {
             $auth = Zend_Auth::getInstance();
             $authData = $auth->getStorage()->read();
@@ -1552,8 +1551,6 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $tableProjectSelect->setIntegrityCheck(false)->join('project_follower', 'project.project_id = project_follower.project_id', array('project_follower_id'));
             }
         }
-         * 
-         */
 
         if (!empty($this->_params['license'])) {
             // license parameter: comma separated list of ids
