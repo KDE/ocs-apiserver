@@ -260,7 +260,7 @@ class Application_Model_ProjectComments
                     ,case when r.score IS NOT NULL then (r.score*10) ELSE 0 END AS comment_score
                     , c.*, member.*,r.* FROM comments c
                     STRAIGHT_JOIN member ON c.comment_member_id = member.member_id
-                    JOIN project_rating r ON r.comment_id = c.comment_id AND r.rating_active = 1
+                    LEFT JOIN project_rating r ON r.comment_id = c.comment_id AND r.rating_active = 1
                     WHERE comment_target_id = :project_id
                     AND comment_parent_id = 0
                     AND comment_type = :type_id
