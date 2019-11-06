@@ -1089,7 +1089,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'homepage'             => $previewPage,
                         'homepagetype'         => '',
                         'donationpage'         => $donationPage,
-                        'comments'             => $project->count_ratings,
+                        'comments'             => $project->count_comments,
                         'commentspage'         => $previewPage,
                         'fans'                 => null,
                         'fanspage'             => '',
@@ -1192,8 +1192,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             'xdg_type'        => 'cat_xdg_type',
             'name_legacy'     => 'cat_name_legacy',
             new Zend_Db_Expr("(select count(1) as num_files from ppload.ppload_files f where f.active = 1 and f.collection_id = project.ppload_collection_id group by f.collection_id) as num_files"),
-            new Zend_Db_Expr("(select count(1) AS `amount` from `stat_downloads_24h` `s` WHERE s.collection_id = project.ppload_collection_id group by `s`.`collection_id`) as num_dls"),
-            new Zend_Db_Expr("(select count(1) AS count_ratings from `project_rating` `pr` JOIN comments c ON c.comment_target_id = pr.project_id AND c.comment_id = pr.comment_id WHERE pr.project_id = 1167640 AND pr.rating_active = 1 AND c.comment_active = 1) as count_ratings")
+            new Zend_Db_Expr("(select count(1) AS `amount` from `stat_downloads_24h` `s` WHERE s.collection_id = project.ppload_collection_id group by `s`.`collection_id`) as num_dls")
         ))->where('project.status = ?',
             Application_Model_Project::PROJECT_ACTIVE)->where('project.ppload_collection_id IS NOT NULL');
         $tableProjectSelect->having('num_files > 0');
