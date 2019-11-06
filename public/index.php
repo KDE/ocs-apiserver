@@ -22,6 +22,11 @@
  *
  */
 
+defined('APPLICATION_TIMEZONE')
+|| define('APPLICATION_TIMEZONE', (getenv('APPLICATION_TIMEZONE') ? getenv('APPLICATION_TIMEZONE') : 'UTC'));
+
+date_default_timezone_set(APPLICATION_TIMEZONE);
+
 // Define path to application directory
 defined('APPLICATION_PATH')
 || define('APPLICATION_PATH', realpath(dirname(__FILE__) . '/../application'));
