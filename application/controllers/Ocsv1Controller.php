@@ -960,6 +960,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         );
 
         $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
+        $nocache = (int)$this->getParam('nocache') ? (int)$this->getParam('nocache') : false;
 
         // Specific content data
         $requestedId = (int)$this->getParam('content_id') ? (int)$this->getParam('content_id') : null;
@@ -969,7 +970,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $this->_sendResponse($response, $this->_format);
         } // Gets a list of a specific set of contents
         else {
-            $response = $this->fetchCategoryContent($previewPicSize, $smallPreviewPicSize, $pploadApi, $debugMode);
+            $response = $this->fetchCategoryContent($previewPicSize, $smallPreviewPicSize, $pploadApi, $debugMode, $nocache);
 
             $this->_sendResponse($response, $this->_format);
         }
@@ -1061,8 +1062,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
             $projTags = rtrim($projTags, ",");
         }
-
-
+        
         if ($this->_format == 'json') {
             $response = array(
                 'status'     => 'ok',
@@ -1399,7 +1399,8 @@ class Ocsv1Controller extends Zend_Controller_Action
         $previewPicSize,
         $smallPreviewPicSize,
         $pploadApi,
-        $debugMode
+        $debugMode,
+        $nocache = false
     ) {
         $limit = 10; // 1 - 100
         $offset = 0;
@@ -1535,6 +1536,32 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (!empty($this->_params['distribution'])) {
             // distribution parameter: comma separated list of ids
         }
+        
+        if (!empty($this->_params['showfavorites'])) {
+            $identity = null;
+            $credential = null;
+            if (!empty($this->_params['login'])) {
+                $identity = $this->_params['login'];
+            }
+            if (!empty($this->_params['password'])) {
+                $credential = $this->_params['password'];
+            }
+            $this->_authenticateUser($identity, $credential, true);
+            
+            $auth = Zend_Auth::getInstance();
+            $authData = $auth->getStorage()->read();
+            
+            if(!isset($this->_authData) && isset($authData)) {
+                $this->_authData = $authData;
+            }
+            
+            // if = 1 then show auth users favorites
+            if($this->_params['showfavorites'] == 1 && null != $this->_authData) {
+                $member_id = $this->_authData->member_id;
+                $tableProjectSelect->where('project_follower.member_id = ?', $member_id);
+                $tableProjectSelect->setIntegrityCheck(false)->join('project_follower', 'project.project_id = project_follower.project_id', array('project_follower_id'));
+            }
+        }
 
         if (!empty($this->_params['license'])) {
             // license parameter: comma separated list of ids
@@ -1581,7 +1608,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $tableProjectSelect->limit($limit, $offset);
 
-
+        
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $storeName = Zend_Registry::get('store_config')->name;
@@ -1590,13 +1617,9 @@ class Ocsv1Controller extends Zend_Controller_Action
         $contentsList = false;
         $count = 0;
         $isFromCache = false;
-
-        if (false === $hasSearchPart) {
-            $contentsList = $cache->load($cacheName);
-            $count = $cache->load($cacheNameCount);
-        }
-
-        if (false == $contentsList) {
+        
+        //ignore cache, if param nocache is set
+        if($nocache == true) {
             $projects = $tableProject->fetchAll($tableProjectSelect);
             $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
             $count = $counter['counter'];
@@ -1604,15 +1627,33 @@ class Ocsv1Controller extends Zend_Controller_Action
             if (count($projects) > 0) {
                 $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects,
                     implode(' ', $selectAndFiles->getPart('where')));
-                if (false === $hasSearchPart) {
-                    $cache->save($contentsList, $cacheName, array(), 1800);
-                    $cache->save($count, $cacheNameCount, array(), 1800);
-                }
             } else {
                 $contentsList = array();
             }
         } else {
-            $isFromCache = true;
+            if (false === $hasSearchPart) {
+                $contentsList = $cache->load($cacheName);
+                $count = $cache->load($cacheNameCount);
+            }
+
+            if (false == $contentsList) {
+                $projects = $tableProject->fetchAll($tableProjectSelect);
+                $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
+                $count = $counter['counter'];
+
+                if (count($projects) > 0) {
+                    $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects,
+                        implode(' ', $selectAndFiles->getPart('where')));
+                    if (false === $hasSearchPart) {
+                        $cache->save($contentsList, $cacheName, array(), 1800);
+                        $cache->save($count, $cacheNameCount, array(), 1800);
+                    }
+                } else {
+                    $contentsList = array();
+                }
+            } else {
+                $isFromCache = true;
+            }
         }
 
         if ($this->_format == 'json') {
