@@ -854,7 +854,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         if (false == ($categoriesList = $cache->load($cacheName))) {
             $categoriesList = $this->_buildCategories();
-            $cache->save($categoriesList, $cacheName, array(), 1800);
+            $cache->save($categoriesList, $cacheName, array(), 900);
         }
 
         if ($this->_format == 'json') {
@@ -1645,8 +1645,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                     $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects,
                         implode(' ', $selectAndFiles->getPart('where')));
                     if (false === $hasSearchPart) {
-                        $cache->save($contentsList, $cacheName, array(), 1800);
-                        $cache->save($count, $cacheNameCount, array(), 1800);
+                        $cache->save($contentsList, $cacheName, array(), 900);
+                        $cache->save($count, $cacheNameCount, array(), 900);
                     }
                 } else {
                     $contentsList = array();
@@ -2071,7 +2071,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (false === ($comments = $cache->load($cacheName))) {
             $modelComments = new Application_Model_ProjectComments();
             $comments = $modelComments->getCommentsHierarchic($contentId);
-            $cache->save($comments, $cacheName, array(), 1800);
+            $cache->save($comments, $cacheName, array(), 900);
         }
 
         if ($comments->count() == 0) {
