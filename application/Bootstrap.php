@@ -138,6 +138,15 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         Zend_Registry::set('db', $db);
         Zend_Db_Table::setDefaultAdapter($db);
         Zend_Db_Table_Abstract::setDefaultAdapter($db);
+        
+        
+        $this->bootstrap('multidb');
+        $resource = $this->getPluginResource('multidb');
+
+        $Adapter1 = $resource->getDb('db1');
+        $Adapter2 = $resource->getDb('db2');     
+        Zend_Registry::set('db1', $Adapter1);
+        Zend_Registry::set('db2',$Adapter2);
     }
 
     protected function _initRouter()
