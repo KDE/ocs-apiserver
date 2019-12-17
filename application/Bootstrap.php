@@ -140,6 +140,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         Zend_Db_Table_Abstract::setDefaultAdapter($db);
         
         
+        /*
         $db2 = $this->bootstrap('db')->getResource('db2');
 
         if ((APPLICATION_ENV == 'development')) {
@@ -151,6 +152,8 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         }
 
         Zend_Registry::set('db2', $db2);
+         * 
+         */
     }
 
     protected function _initRouter()
