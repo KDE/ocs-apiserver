@@ -151,6 +151,9 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             ));
 
             Zend_Registry::set('db2', $db2);
+            
+            $db2->getConnection();
+            
         } catch (Zend_Db_Adapter_Exception $e) {
             Zend_Registry::get('logger')->err('Error Init DB2: '. $e->getTraceAsString());
             //$e->getMessage();
