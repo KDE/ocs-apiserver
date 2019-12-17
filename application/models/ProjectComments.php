@@ -258,7 +258,7 @@ class Application_Model_ProjectComments
                             ELSE c.comment_text
                     END AS comment_text_trim
                     ,case when r.score IS NOT NULL then (r.score*10) ELSE 0 END AS comment_score
-                    ,c.comment_id, member.username
+                    ,c.comment_id, member.username,c.comment_created_at
                     FROM comments c
                     STRAIGHT_JOIN member ON c.comment_member_id = member.member_id
                     LEFT JOIN project_rating r ON r.comment_id = c.comment_id AND r.rating_active = 1
