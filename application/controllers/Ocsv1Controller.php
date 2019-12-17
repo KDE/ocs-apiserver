@@ -2169,6 +2169,10 @@ class Ocsv1Controller extends Zend_Controller_Action
                     if ($score > 0) {
                         $score = $this->roundFunction($score) / 10;
                     }
+                    
+                    if($score == 0) {
+                        $score = 1;
+                    }
 
                     if ($msg != '' && strlen($msg)>0) { 
                         $message = $msg;
