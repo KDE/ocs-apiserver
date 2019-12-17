@@ -89,9 +89,6 @@ class Application_Model_Tags
 
         return null;
     }
-
-
-
     
     
     /**
@@ -111,7 +108,6 @@ class Application_Model_Tags
             AND tag_object.is_deleted = 0
         ";
 
-
         $result = $this->getAdapter()->fetchAll($sql, array('type' => $tag_type,'object_id' => $object_id));
         $returnArray = array();
         if (isset($result)) {
@@ -124,9 +120,6 @@ class Application_Model_Tags
         return null;
     }
     
-
-
-
     /**
      * @return array|null
      */

@@ -49,7 +49,7 @@ class Application_Model_ProjectComments
     public function __construct($_dataTableName = 'Application_Model_DbTable_Comments')
     {
         $this->_dataTableName = $_dataTableName;
-        $this->_dataTable = new $this->_dataTableName;
+        $this->_dataTable = new Application_Model_DbTable_Comments();
     }
 
     public function getCommentWithMember($comment_id)
@@ -442,4 +442,13 @@ class Application_Model_ProjectComments
         return $returnValue;
     }
 
+    
+    public function deactiveComment($comment_id){
+        $sql = '
+                UPDATE comments
+                SET comment_active = 0
+                WHERE comment_id = :comment_id';
+        $writer = new Application_Model_DbTable_Comments(array('db' => 'db2'));
+        $writer->getAdapter()->query($sql, array('comment_id' => $comment_id))->execute();        
+    }
 }

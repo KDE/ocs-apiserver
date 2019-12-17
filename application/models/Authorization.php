@@ -1,11 +1,11 @@
 <?php
 
 /**
- *  ocs-apiserver
+ *  ocs-webserver
  *
  *  Copyright 2016 by pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ *    This file is part of ocs-webserver.
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Affero General Public License as
@@ -44,6 +44,10 @@ class Application_Model_Authorization
         $this->_dataTable = new $this->_dataModelName;
     }
 
+    /**
+     * @throws Zend_Session_Exception
+     * @throws Zend_Exception
+     */
     public function logout()
     {
         $auth = Zend_Auth::getInstance();
@@ -65,7 +69,9 @@ class Application_Model_Authorization
      * @param string $loginMethod
      *
      * @return Zend_Auth_Result
+     * @throws Zend_Auth_Storage_Exception
      * @throws Zend_Session_Exception
+     * @throws exception
      */
     public function authenticateUser($userId, $userSecret, $setRememberMe = false, $loginMethod = null)
     {
@@ -85,16 +91,18 @@ class Application_Model_Authorization
     }
 
     /**
-     * @param string $identity
-     * @param string $credential
-     * @param null|string $loginMethod
+     * @param      $identity
+     * @param      $credential
+     * @param null $loginMethod
      *
      * @return Zend_Auth_Result
      * @throws Zend_Auth_Adapter_Exception
+     * @throws Zend_Exception
      */
     protected function authenticateCredentials($identity, $credential, $loginMethod = null)
     {
-        $authAdapter = Local_Auth_AdapterFactory::getAuthAdapter($identity, $loginMethod);
+        /** @var Local_Auth_Adapter_Ocs $authAdapter */
+        $authAdapter = Local_Auth_AdapterFactory::getAuthAdapter($identity, $credential, $loginMethod);
         $authAdapter->setIdentity($identity);
         $authAdapter->setCredential($credential);
         $authResult = $authAdapter->authenticate();
@@ -108,6 +116,9 @@ class Application_Model_Authorization
 
     /**
      * @param bool $setRememberMe
+     *
+     * @throws Zend_Db_Statement_Exception
+     * @throws Zend_Exception
      */
     public function updateRememberMe($setRememberMe = false)
     {
@@ -148,6 +159,7 @@ class Application_Model_Authorization
         if (isset($this->_loginMethod) AND $this->_loginMethod == self::LOGIN_REMEMBER_ME) {
             $modelMember = new Application_Model_Member();
             $memberData = $modelMember->fetchMemberData($authUserData->member_id);
+            $extendedAuthUserData->external_id = $memberData->external_id;
             $extendedAuthUserData->username = $memberData->username;
             $extendedAuthUserData->roleId = $memberData->roleId;
             $extendedAuthUserData->avatar = $memberData->avatar;
@@ -174,9 +186,9 @@ class Application_Model_Authorization
         $database = Zend_Db_Table::getDefaultAdapter();
 
         $sql = "
-                SELECT shortname
-                FROM member_role
-                WHERE  member_role_id = ?;
+                SELECT `shortname`
+                FROM `member_role`
+                WHERE  `member_role_id` = ?;
         ";
         $sql = $database->quoteInto($sql, $roleId, 'INTEGER', 1);
         $resultSet = $database->query($sql)->fetchAll();
@@ -191,14 +203,15 @@ class Application_Model_Authorization
      * @param int $identifier
      *
      * @return array
+     * @throws Zend_Db_Statement_Exception
      */
     protected function getProjectIdsForUser($identifier)
     {
         $database = Zend_Db_Table::getDefaultAdapter();
         $sql = "
-                SELECT p.project_id
-                FROM project AS p
-                WHERE p.member_id = ?;
+                SELECT `p`.`project_id`
+                FROM `project` AS `p`
+                WHERE `p`.`member_id` = ?;
         ";
         $sql = $database->quoteInto($sql, $identifier, 'INTEGER', 1);
         $resultSet = $database->query($sql)->fetchAll();
@@ -246,6 +259,9 @@ class Application_Model_Authorization
 
     /**
      * @param int $identity
+     *
+     * @throws Zend_Auth_Storage_Exception
+     * @throws exception
      */
     public function storeAuthSessionDataByIdentity($identity)
     {
@@ -260,6 +276,7 @@ class Application_Model_Authorization
      * @param string|int $identity
      *
      * @return object
+     * @throws exception
      */
     protected function getAllAuthUserData($identifier, $identity)
     {
@@ -273,20 +290,13 @@ class Application_Model_Authorization
      * @param string|int $identity
      *
      * @return object
+     * @throws Zend_Exception
      */
     protected function getAuthUserData($identifier, $identity)
     {
-        Zend_Registry::get('logger')->info(__METHOD__ . ' - $identifier: ' . print_r($identifier, true)
-            . ' :: $identity: ' . print_r($identity, true))
-        ;
         $dataTable = $this->_dataTable;
-        $where = $dataTable->select()->where($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?',
-            $identity)
-        ;
+        $where = $dataTable->select()->where($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?', $identity);
         $resultRow = $dataTable->fetchRow($where)->toArray();
-        Zend_Registry::get('logger')->info(__METHOD__ . ' - user found. username: ' . print_r($resultRow['username'],
-                true))
-        ;
         unset($resultRow['password']);
 
         return (object)$resultRow;
@@ -296,26 +306,23 @@ class Application_Model_Authorization
      * @param string $identity
      *
      * @return null|object
+     * @throws Zend_Exception
      */
     public function getAuthUserDataFromUnverified($identity)
     {
-        Zend_Registry::get('logger')->info(__METHOD__ . ' - $identity: ' . print_r($identity, true));
         $sql = "
-            SELECT member_email.email_checked, member_email.email_address, member.*
-            FROM member_email
-            JOIN member ON member.member_id = member_email.email_member_id
-            WHERE email_deleted = 0 AND member_email.email_verification_value = :verification
+            SELECT `m`.*, `member_email`.`email_verification_value`, `member_email`.`email_checked`, `mei`.`external_id` 
+            FROM `member_email`
+            JOIN `member` AS `m` ON `m`.`member_id` = `member_email`.`email_member_id`
+            LEFT JOIN `member_external_id` AS `mei` ON `mei`.`member_id` = `m`.`member_id`
+            WHERE `member_email`.`email_deleted` = 0 AND `member_email`.`email_verification_value` = :verification AND `m`.`is_deleted` = 0
         ";
         $resultRow = $this->_dataTable->getAdapter()->fetchRow($sql, array('verification' => $identity));
         if ($resultRow) {
-            Zend_Registry::get('logger')->info(__METHOD__
-                . " - found (member_id,mail,is_active,email_address,email_checked): ({$resultRow['member_id']},{$resultRow['mail']},{$resultRow['is_active']},{$resultRow['email_address']},{$resultRow['email_checked']})")
-            ;
             unset($resultRow['password']);
 
             return (object)$resultRow;
         }
-        Zend_Registry::get('logger')->warn(__METHOD__ . ' - unverified user not found');
 
         return null;
     }
@@ -328,6 +335,8 @@ class Application_Model_Authorization
      * @param string $loginMethod
      *
      * @return mixed
+     * @throws Zend_Auth_Adapter_Exception
+     * @throws Zend_Exception
      */
     public function getAuthDataFromApi($identity, $credential, $loginMethod = null)
     {
@@ -350,12 +359,8 @@ class Application_Model_Authorization
      */
     public function removeAllCookieInformation($identifier, $identity)
     {
-
         $dataTable = new Application_Model_DbTable_Session();
-        $where =
-            $dataTable->getAdapter()->quoteInto($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?',
-                $identity)
-        ;
+        $where = $dataTable->getAdapter()->quoteInto($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?', $identity);
 
         return $dataTable->delete($where);
     }

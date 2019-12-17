@@ -138,6 +138,34 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         Zend_Registry::set('db', $db);
         Zend_Db_Table::setDefaultAdapter($db);
         Zend_Db_Table_Abstract::setDefaultAdapter($db);
+        
+        
+        $config = Zend_Registry::get('config');
+        //$db2 = $this->bootstrap('db')->getResource('db2');
+        try {
+            $db2 = Zend_Db::factory($config->settings->db2->adapter, array(
+                'host'     => $config->settings->db2->params->host,
+                'username' => $config->settings->db2->params->username,
+                'password' => $config->settings->db2->params->password,
+                'dbname'   => $config->settings->db2->params->dbname,
+                'charset'  => $config->settings->db2->params->charset,
+                'type'  => $config->settings->db2->params->type,
+                'persistent'  => $config->settings->db2->params->persistent,
+                'isDefaultTableAdapter' => FALSE
+            ));
+
+            Zend_Registry::set('db2', $db2);
+            
+            $db2->getConnection();
+            
+        } catch (Zend_Db_Adapter_Exception $e) {
+            Zend_Registry::get('logger')->err('Error Init DB2: '. $e->getTraceAsString());
+            //$e->getMessage();
+        } catch (Zend_Exception $e) {
+            Zend_Registry::get('logger')->err('Error Init DB2: '. $e->getTraceAsString());
+           //$e->getMessage();
+        }
+        
     }
 
     protected function _initRouter()

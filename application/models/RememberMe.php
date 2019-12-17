@@ -1,11 +1,11 @@
 <?php
 
 /**
- *  ocs-apiserver
+ *  ocs-webserver
  *
  *  Copyright 2016 by pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ *    This file is part of ocs-webserver.
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Affero General Public License as
@@ -48,6 +48,7 @@ class Application_Model_RememberMe
      *
      * @param string $_dataTableName
      *
+     * @throws Zend_Exception
      * @link http://php.net/manual/en/language.oop5.decon.php
      */
     public function __construct($_dataTableName = 'Application_Model_DbTable_Session')
@@ -58,14 +59,15 @@ class Application_Model_RememberMe
         $this->dataTable = new $this->dataTableName;
 
         $config = Zend_Registry::get('config');
-        $this->cookieName = $config->settings->auth_session->remember_me->name;
-        $this->cookieTimeout = $config->settings->auth_session->remember_me->timeout;
+        $this->cookieName = $config->settings->session->remember_me->name;
+        $this->cookieTimeout = $config->settings->session->remember_me->cookie_lifetime;
     }
 
     /**
      * @param $identifier
      *
      * @return array|null
+     * @throws Zend_Db_Statement_Exception
      */
     public function updateSession($identifier)
     {
@@ -112,6 +114,7 @@ class Application_Model_RememberMe
      * @param int $identifier
      *
      * @return array return new session data
+     * @throws Exception
      */
     public function createSession($identifier)
     {
@@ -160,14 +163,14 @@ class Application_Model_RememberMe
         // delete old cookie with wrong domain
         //setcookie($this->cookieName, null, time() - $this->cookieTimeout, '/', $this->request->getHttpHost(), null, true);
 
-        return setcookie($this->cookieName, serialize($sessionData), $newSessionData['expiry'], '/', $domain, null,
-            true);
+        return setcookie($this->cookieName, serialize($sessionData), $newSessionData['expiry'], '/', $domain, null, true);
     }
 
     /**
      * @param $newSessionData
      *
      * @return mixed
+     * @throws Exception
      */
     protected function saveSessionData($newSessionData)
     {
@@ -183,6 +186,7 @@ class Application_Model_RememberMe
      * @param int   $identifier
      *
      * @return int count of updated rows
+     * @throws Zend_Db_Statement_Exception
      */
     private function updateSessionData($currentSessionData, $newSessionData, $identifier)
     {
@@ -191,14 +195,14 @@ class Application_Model_RememberMe
         }
 
         $sql =
-            "UPDATE `session` SET remember_me_id = :remember_new, expiry = FROM_UNIXTIME(:expiry_new), changed = NOW() WHERE member_id = :member_id AND remember_me_id = :remember_old";
+            "UPDATE `session` SET `remember_me_id` = :remember_new, `expiry` = FROM_UNIXTIME(:expiry_new), `changed` = NOW() WHERE `member_id` = :member_id AND `remember_me_id` = :remember_old";
 
         $result = $this->dataTable->getAdapter()->query($sql, array(
-                'remember_new' => $newSessionData['remember_me_id'],
-                'expiry_new'   => $newSessionData['expiry'],
-                'member_id'    => $identifier,
-                'remember_old' => $currentSessionData['remember_me_id']
-            ))
+            'remember_new' => $newSessionData['remember_me_id'],
+            'expiry_new'   => $newSessionData['expiry'],
+            'member_id'    => $identifier,
+            'remember_old' => $currentSessionData['remember_me_id']
+        ))
         ;
 
         return $result->rowCount();
@@ -248,15 +252,16 @@ class Application_Model_RememberMe
      * @param array $currentSessionCookie
      *
      * @return bool
+     * @throws Zend_Db_Statement_Exception
      */
     protected function removeSessionData($currentSessionCookie)
     {
-        $sql = "DELETE FROM `session` WHERE member_id = :member_id AND remember_me_id = :uuid";
+        $sql = "DELETE FROM `session` WHERE `member_id` = :member_id AND `remember_me_id` = :uuid";
 
         $result = $this->dataTable->getAdapter()->query($sql, array(
-                'member_id' => $currentSessionCookie['member_id'],
-                'uuid'      => $currentSessionCookie['remember_me_id']
-            ))
+            'member_id' => $currentSessionCookie['member_id'],
+            'uuid'      => $currentSessionCookie['remember_me_id']
+        ))
         ;
         if ($result->rowCount() > 0) {
             return true;
@@ -265,7 +270,7 @@ class Application_Model_RememberMe
         }
     }
 
-    protected function deleteCookie()
+    public function deleteCookie()
     {
         $domain = Local_Tools_ParseDomain::get_domain($this->request->getHttpHost());
         $cookieExpire = time() - $this->cookieTimeout;

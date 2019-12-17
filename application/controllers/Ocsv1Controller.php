@@ -1288,6 +1288,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         $sql = "    SELECT  *
                      FROM `ppload`.`ppload_files` `f` 
                      WHERE `f`.`collection_id` = :collection_id 
+                     AND `f`.`ocs_compatible` = 1 
                      AND `f`.`active` = 1
                    ";
         if (null != $fileIds && count($fileIds) > 0) {
@@ -2138,7 +2139,155 @@ class Ocsv1Controller extends Zend_Controller_Action
      */
     public function voteAction()
     {
-        $this->_sendErrorResponse(405, "method not allowed");
+        //20191215 enable rating
+        //$this->_sendErrorResponse(405, "method not allowed");
+        
+        
+        
+        
+                
+        if ($this->_authenticateUser(null, null, true)) {
+            
+            Zend_Registry::get('logger')->info('Start Voting');
+            
+            if($this->hasParam('contentid') && $this->hasParam('vote')) { 
+                $score = (int)$this->getParam('vote');
+                
+                if($score >= 0 && $score <= 100) { 
+                    $msg = '';
+                    
+                    if($this->hasParam('msg')) {
+                        $msg = trim($this->getParam('msg'));
+                    }
+                    
+                    $project_id = (int)$this->getParam('contentid');
+                    $status = 'ok';
+                    $message = '';
+                    
+                    Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
+
+                    if ($score > 0) {
+                        $score = $this->roundFunction($score) / 10;
+                    }
+                    
+                    if($score == 0) {
+                        $score = 1;
+                    }
+
+                    if ($msg != '' && strlen($msg)>0) { 
+                        $message = $msg;
+                    } else {
+                        //Get message via score
+                        switch ($score) {
+                            case 1:
+                                $message = '1 ugh';
+                                break;
+                            case 2:
+                                $message = '2 really bad';
+                                break;
+                            case 3:
+                                $message = '3 bad';
+                                break;
+                            case 4:
+                                $message = '4 soso';
+                                break;
+                            case 5:
+                                $message = '5 average';
+                                break;
+                            case 6:
+                                $message = '6 okay';
+                                break;
+                            case 7:
+                                $message = '7 good';
+                                break;
+                            case 8:
+                                $message = '8 great';
+                                break;
+                            case 9:
+                                $message = '9 excellent';
+                                break;
+                            case 10:
+                                $message = '10 the best';
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+
+                    Zend_Registry::get('logger')->info('Comment: '. $message);
+
+                    //$product = $this->loadProductInfo((int)$this->getParam('p'));
+                    $member_id = $this->_authData->member_id;
+
+                    Zend_Registry::get('logger')->info('MemberId: '. $member_id);
+
+                    /*
+                    if($this->view->product->member_id==$this->view->member_id)
+                    {
+                        $this->_helper->json(array('status' => 'error', 'message' => ' Not allowed. ', 'data' => ''));
+                        return;   
+                    }
+                     * 
+                     */
+                    
+                    try {
+                        $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
+                        $modelRating->scoreForProject($project_id, $member_id, $score, $message);
+                    } catch (Exception $exc) {
+                        Zend_Registry::get('logger')->err('Error Saving Vote: '. $exc->getTraceAsString());
+                        $this->_sendErrorResponse(500, $exc->getTraceAsString());
+                    }
+
+
+                    /*
+                    if($this->view->product){                    
+                        //Send a notification to the owner
+                        $this->sendNotificationToOwner($this->view->product, Default_Model_HtmlPurify::purify($this->getParam('msg')));                   
+                    }
+                     * 
+                     */
+
+                    if ($this->_format == 'json') {
+                        $response = array(
+                            'status'     => $status,
+                            'statuscode' => 100,
+                            'message'    => $message,
+                            'data'       => '',
+                            'score' =>$score
+                        );
+                    } else {
+                        $response = array(
+                            'meta' => array(
+                                'status'     => array('@text' => $status),
+                                'statuscode' => array('@text' => 100),
+                                'message'    => array('@text' => $message),
+                                'score' => array('@text' => $score)
+                            ),
+                            'data' => array('@text' => '')
+                        );
+                    }
+
+                    Zend_Registry::get('logger')->info('Done: '. json_encode($response));
+
+                    //$this->_helper->json(array('status' => $status, 'message' => $message, 'data' => '','laplace_score' =>$this->view->product->laplace_score));
+
+                    $this->_sendResponse($response, $this->_format);
+                } else {
+            
+                    $this->_sendErrorResponse(101, 'please specify all mandatory fields');
+            
+                }
+                
+            } else {
+            
+                $this->_sendErrorResponse(101, 'please specify all mandatory fields');
+            
+            }
+        } else {
+            $this->_sendErrorResponse(102, 'login not valid');
+        }
+        
     }
 
     /**
@@ -2187,5 +2336,18 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         return $parsedTags;
     }
+    
+    
+    function roundFunction($n)  
+    {  
+        // Smaller multiple  
+        $a = (int)($n / 10) * 10;  
+
+        // Larger multiple  
+        $b = ($a + 10);  
+
+        // Return of closest of two  
+        return ($n - $a > $b - $n) ? $b : $a;  
+    }  
 
 }

@@ -1,11 +1,11 @@
 <?php
 
 /**
- *  ocs-apiserver
+ *  ocs-webserver
  *
  *  Copyright 2016 by pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ *    This file is part of ocs-webserver.
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Affero General Public License as
@@ -36,13 +36,16 @@ class Application_Model_DbTable_Member extends Local_Model_Table
     const MEMBER_DEFAULT_PROFILE_IMAGE = '/images/system/default-profile.png';
     const MEMBER_TYPE_GROUP = 1;
     const MEMBER_TYPE_PERSON = 0;
+    const ROLE_ID_MODERATOR = 400;
     const ROLE_ID_DEFAULT = 300;
     const ROLE_ID_STAFF = 200;
     const ROLE_ID_ADMIN = 100;
     const PROFILE_IMG_SRC_LOCAL = 'local';
     const SOURCE_LOCAL = 0;
     const SOURCE_HIVE = 1;
-
+    const PASSWORD_TYPE_OCS = 0;
+    const PASSWORD_TYPE_HIVE = 1;
+    const MEMBER_AVATAR_TYPE_USERUPDATED = 2;
     protected $_keyColumnsForRow = array('member_id');
 
     protected $_key = 'member_id';
