@@ -2213,7 +2213,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 }
                  * 
                  */
-                $modelRating = new Default_Model_DbTable_ProjectRating(array('db' => 'db2'));                
+                $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
                 $modelRating->scoreForProject($project_id, $member_id, $score, $message);
 
                 /*
