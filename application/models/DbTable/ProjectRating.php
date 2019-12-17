@@ -200,7 +200,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
         $result = $this->getAdapter()->fetchRow($sql);
         $is_upvote=$userRating == 1 ? true : false;
         $is_exist = (($result!=null) && ($result['rating_id']!=null))?true:false;
-        $modelComments = new Application_Model_ProjectComments();
+        $modelComments = new Application_Model_ProjectComments(array('db' => 'db2'));
 
         // Zend_Registry::get('logger')->info($msg);
         if($is_exist){
@@ -222,7 +222,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
             $data['comment_member_id'] =$member_id;
             $data['comment_parent_id'] = 0;
             $data['comment_text'] = $msg;
-            $tableReplies = new Application_Model_ProjectComments();
+            $tableReplies = new Application_Model_ProjectComments(array('db' => 'db2'));
             $result = $tableReplies->save($data);
             $comment_id =  $result->comment_id;
 
