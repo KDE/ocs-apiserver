@@ -2151,6 +2151,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             Zend_Registry::get('logger')->info('Start Voting');
             
             if($this->hasParam('contentid') && $this->hasParam('vote')) { 
+                $score = (int)$this->getParam('vote');
                 
                 if($score >= 0 && $score <= 100) { 
                     $msg = '';
@@ -2158,7 +2159,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     if($this->hasParam('msg')) {
                         $msg = trim($this->getParam('msg'));
                     }
-                    $score = (int)$this->getParam('vote');
+                    
                     $project_id = (int)$this->getParam('contentid');
                     $status = 'ok';
                     $message = '';
