@@ -147,7 +147,10 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
                 'host'     => $config->settings->db2->params->host,
                 'username' => $config->settings->db2->params->username,
                 'password' => $config->settings->db2->params->password,
-                'dbname'   => $config->settings->db2->params->dbname
+                'dbname'   => $config->settings->db2->params->dbname,
+                'charset'  => $config->settings->db2->params->charset,
+                'type'  => $config->settings->db2->params->type,
+                'persistent'  => $config->settings->db2->params->persistent,
             ));
 
             Zend_Registry::set('db2', $db2);
