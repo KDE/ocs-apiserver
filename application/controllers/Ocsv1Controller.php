@@ -2142,22 +2142,29 @@ class Ocsv1Controller extends Zend_Controller_Action
         //20191215 enable rating
         //$this->_sendErrorResponse(405, "method not allowed");
         
-        $msg = trim($this->getParam('msg'));
-        $score = (int)$this->getParam('vote');
-        $project_id = (int)$this->getParam('contentid');
-        $status = 'ok';
-        $message = '';
+        
         
         
                 
         if ($this->_authenticateUser(null, null, true)) {
             
+            Zend_Registry::get('logger')->info('Start Voting');
+            
+            $msg = trim($this->getParam('msg'));
+            $score = (int)$this->getParam('vote');
+            $project_id = (int)$this->getParam('contentid');
+            $status = 'ok';
+            $message = '';
+        
             if ($score > 0) {
                 $score = $this->roundFunction($score);
             }
             
             
-            if($score >= 0 && $score <= 100) { 
+            if($this->hasParam('contentid') && $this->hasParam('vote') && $score >= 0 && $score <= 100) { 
+
+                Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
+
                 
                 if ($msg != '' && strlen($msg)>0) { 
                     $message = $msg;
@@ -2200,11 +2207,13 @@ class Ocsv1Controller extends Zend_Controller_Action
                     }
                 }
                 
-                
+                Zend_Registry::get('logger')->info('Comment: '. $message);
                 
                 //$product = $this->loadProductInfo((int)$this->getParam('p'));
                 $member_id = $this->_authData->member_id;
 
+                Zend_Registry::get('logger')->info('MemberId: '. $member_id);
+                
                 /*
                 if($this->view->product->member_id==$this->view->member_id)
                 {
@@ -2243,6 +2252,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                         'data' => array('@text' => '')
                     );
                 }
+                
+                Zend_Registry::get('logger')->info('Done: '. json_encode($response));
 
                 //$this->_helper->json(array('status' => $status, 'message' => $message, 'data' => '','laplace_score' =>$this->view->product->laplace_score));
                 
