@@ -2150,115 +2150,125 @@ class Ocsv1Controller extends Zend_Controller_Action
             
             Zend_Registry::get('logger')->info('Start Voting');
             
-            $msg = trim($this->getParam('msg'));
-            $score = (int)$this->getParam('vote');
-            $project_id = (int)$this->getParam('contentid');
-            $status = 'ok';
-            $message = '';
-        
-            if ($score > 0) {
-                $score = $this->roundFunction($score);
-            }
-            
-            
-            if($this->hasParam('contentid') && $this->hasParam('vote') && $score >= 0 && $score <= 100) { 
-
-                Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
-
+            if($this->hasParam('contentid') && $this->hasParam('vote')) { 
                 
-                if ($msg != '' && strlen($msg)>0) { 
-                    $message = $msg;
-                } else {
-                    //Get message via score
-                    switch ($score) {
-                        case 10:
-                            $message = '1 ugh';
-                            break;
-                        case 20:
-                            $message = '2 really bad';
-                            break;
-                        case 30:
-                            $message = '3 bad';
-                            break;
-                        case 40:
-                            $message = '4 soso';
-                            break;
-                        case 50:
-                            $message = '5 average';
-                            break;
-                        case 60:
-                            $message = '6 okay';
-                            break;
-                        case 70:
-                            $message = '7 good';
-                            break;
-                        case 80:
-                            $message = '8 great';
-                            break;
-                        case 90:
-                            $message = '9 excellent';
-                            break;
-                        case 100:
-                            $message = '10 the best';
-                            break;
-
-                        default:
-                            break;
+                if($score >= 0 && $score <= 100) { 
+                    $msg = '';
+                    
+                    if($this->hasParam('msg')) {
+                        $msg = trim($this->getParam('msg'));
                     }
-                }
-                
-                Zend_Registry::get('logger')->info('Comment: '. $message);
-                
-                //$product = $this->loadProductInfo((int)$this->getParam('p'));
-                $member_id = $this->_authData->member_id;
+                    $score = (int)$this->getParam('vote');
+                    $project_id = (int)$this->getParam('contentid');
+                    $status = 'ok';
+                    $message = '';
+                    
+                    Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
 
-                Zend_Registry::get('logger')->info('MemberId: '. $member_id);
-                
-                /*
-                if($this->view->product->member_id==$this->view->member_id)
-                {
-                    $this->_helper->json(array('status' => 'error', 'message' => ' Not allowed. ', 'data' => ''));
-                    return;   
-                }
-                 * 
-                 */
-                $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
-                $modelRating->scoreForProject($project_id, $member_id, $score, $message);
+                    //if ($score > 0) {
+                    //    $score = $this->roundFunction($score);
+                    //}
 
-                /*
-                if($this->view->product){                    
-                    //Send a notification to the owner
-                    $this->sendNotificationToOwner($this->view->product, Default_Model_HtmlPurify::purify($this->getParam('msg')));                   
-                }
-                 * 
-                 */
-                
-                if ($this->_format == 'json') {
-                    $response = array(
-                        'status'     => $status,
-                        'statuscode' => 100,
-                        'message'    => $message,
-                        'data'       => '',
-                        'laplace_score' =>$score
-                    );
+                    
+
+
+                    if ($msg != '' && strlen($msg)>0) { 
+                        $message = $msg;
+                    } else {
+                        //Get message via score
+                        switch ($score) {
+                            case 10:
+                                $message = '1 ugh';
+                                break;
+                            case 20:
+                                $message = '2 really bad';
+                                break;
+                            case 30:
+                                $message = '3 bad';
+                                break;
+                            case 40:
+                                $message = '4 soso';
+                                break;
+                            case 50:
+                                $message = '5 average';
+                                break;
+                            case 60:
+                                $message = '6 okay';
+                                break;
+                            case 70:
+                                $message = '7 good';
+                                break;
+                            case 80:
+                                $message = '8 great';
+                                break;
+                            case 90:
+                                $message = '9 excellent';
+                                break;
+                            case 100:
+                                $message = '10 the best';
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+
+                    Zend_Registry::get('logger')->info('Comment: '. $message);
+
+                    //$product = $this->loadProductInfo((int)$this->getParam('p'));
+                    $member_id = $this->_authData->member_id;
+
+                    Zend_Registry::get('logger')->info('MemberId: '. $member_id);
+
+                    /*
+                    if($this->view->product->member_id==$this->view->member_id)
+                    {
+                        $this->_helper->json(array('status' => 'error', 'message' => ' Not allowed. ', 'data' => ''));
+                        return;   
+                    }
+                     * 
+                     */
+                    $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
+                    $modelRating->scoreForProject($project_id, $member_id, $score, $message);
+
+                    /*
+                    if($this->view->product){                    
+                        //Send a notification to the owner
+                        $this->sendNotificationToOwner($this->view->product, Default_Model_HtmlPurify::purify($this->getParam('msg')));                   
+                    }
+                     * 
+                     */
+
+                    if ($this->_format == 'json') {
+                        $response = array(
+                            'status'     => $status,
+                            'statuscode' => 100,
+                            'message'    => $message,
+                            'data'       => '',
+                            'laplace_score' =>$score
+                        );
+                    } else {
+                        $response = array(
+                            'meta' => array(
+                                'status'     => array('@text' => $status),
+                                'statuscode' => array('@text' => 100),
+                                'message'    => array('@text' => $message),
+                                'laplace_score' => array('@text' => $score)
+                            ),
+                            'data' => array('@text' => '')
+                        );
+                    }
+
+                    Zend_Registry::get('logger')->info('Done: '. json_encode($response));
+
+                    //$this->_helper->json(array('status' => $status, 'message' => $message, 'data' => '','laplace_score' =>$this->view->product->laplace_score));
+
+                    $this->_sendResponse($response, $this->_format);
                 } else {
-                    $response = array(
-                        'meta' => array(
-                            'status'     => array('@text' => $status),
-                            'statuscode' => array('@text' => 100),
-                            'message'    => array('@text' => $message),
-                            'laplace_score' => array('@text' => $score)
-                        ),
-                        'data' => array('@text' => '')
-                    );
+            
+                    $this->_sendErrorResponse(101, 'please specify all mandatory fields');
+            
                 }
-                
-                Zend_Registry::get('logger')->info('Done: '. json_encode($response));
-
-                //$this->_helper->json(array('status' => $status, 'message' => $message, 'data' => '','laplace_score' =>$this->view->product->laplace_score));
-                
-                $this->_sendResponse($response, $this->_format);
-                
                 
             } else {
             
