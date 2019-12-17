@@ -143,7 +143,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $config = Zend_Registry::get('config');
         //$db2 = $this->bootstrap('db')->getResource('db2');
         try {
-            $db2 = Zend_Db::factory($config->settings->db2->params->adapter, array(
+            $db2 = Zend_Db::factory($config->settings->db2->adapter, array(
                 'host'     => $config->settings->db2->params->host,
                 'username' => $config->settings->db2->params->username,
                 'password' => $config->settings->db2->params->password,
@@ -151,6 +151,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
                 'charset'  => $config->settings->db2->params->charset,
                 'type'  => $config->settings->db2->params->type,
                 'persistent'  => $config->settings->db2->params->persistent,
+                'isDefaultTableAdapter' => FALSE
             ));
 
             Zend_Registry::set('db2', $db2);
