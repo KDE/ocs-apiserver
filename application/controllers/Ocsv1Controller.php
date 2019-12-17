@@ -2166,7 +2166,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
 
                     if ($score > 0) {
-                        $score = $this->roundFunction($score);
+                        $score = $this->roundFunction($score)/100;
                     }
 
                     if ($msg != '' && strlen($msg)>0) { 
@@ -2174,34 +2174,34 @@ class Ocsv1Controller extends Zend_Controller_Action
                     } else {
                         //Get message via score
                         switch ($score) {
-                            case 10:
+                            case 1:
                                 $message = '1 ugh';
                                 break;
-                            case 20:
+                            case 2:
                                 $message = '2 really bad';
                                 break;
-                            case 30:
+                            case 3:
                                 $message = '3 bad';
                                 break;
-                            case 40:
+                            case 4:
                                 $message = '4 soso';
                                 break;
-                            case 50:
+                            case 5:
                                 $message = '5 average';
                                 break;
-                            case 60:
+                            case 6:
                                 $message = '6 okay';
                                 break;
-                            case 70:
+                            case 7:
                                 $message = '7 good';
                                 break;
-                            case 80:
+                            case 8:
                                 $message = '8 great';
                                 break;
-                            case 90:
+                            case 9:
                                 $message = '9 excellent';
                                 break;
-                            case 100:
+                            case 10:
                                 $message = '10 the best';
                                 break;
 
@@ -2249,7 +2249,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'statuscode' => 100,
                             'message'    => $message,
                             'data'       => '',
-                            'laplace_score' =>$score
+                            'score' =>$score
                         );
                     } else {
                         $response = array(
@@ -2257,7 +2257,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                                 'status'     => array('@text' => $status),
                                 'statuscode' => array('@text' => 100),
                                 'message'    => array('@text' => $message),
-                                'laplace_score' => array('@text' => $score)
+                                'score' => array('@text' => $score)
                             ),
                             'data' => array('@text' => '')
                         );
