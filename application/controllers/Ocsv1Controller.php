@@ -2166,7 +2166,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                     Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
 
                     if ($score > 0) {
-                        $score = $this->roundFunction($score)/10;
+                        $score = $this->roundFunction($score);
                     }
 
                     if ($msg != '' && strlen($msg)>0) { 
