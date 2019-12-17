@@ -140,20 +140,30 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         Zend_Db_Table_Abstract::setDefaultAdapter($db);
         
         
-        /*
-        $db2 = $this->bootstrap('db')->getResource('db2');
+        $config = Zend_Registry::get('config');
+        //$db2 = $this->bootstrap('db')->getResource('db2');
+        try {
+            $db2 = Zend_Db::factory($config->settings->db2->params->adapter, array(
+                'host'     => $config->settings->db2->params->host,
+                'username' => $config->settings->db2->params->username,
+                'password' => $config->settings->db2->params->password,
+                'dbname'   => $config->settings->db2->params->dbname
+            ));
+            if ((APPLICATION_ENV == 'development')) {
+                $profiler = new Zend_Db_Profiler_Firebug('All DB Queries');
+                $profiler->setEnabled(true);
 
-        if ((APPLICATION_ENV == 'development')) {
-            $profiler = new Zend_Db_Profiler_Firebug('All DB Queries');
-            $profiler->setEnabled(true);
+                // Attach the profiler to your db adapter
+                $db2->setProfiler($profiler);
+            }
 
-            // Attach the profiler to your db adapter
-            $db2->setProfiler($profiler);
+            Zend_Registry::set('db2', $db2);
+        } catch (Zend_Db_Adapter_Exception $e) {
+            $e->getMessage();
+        } catch (Zend_Exception $e) {
+           $e->getMessage();
         }
-
-        Zend_Registry::set('db2', $db2);
-         * 
-         */
+        
     }
 
     protected function _initRouter()
