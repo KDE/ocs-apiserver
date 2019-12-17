@@ -140,13 +140,17 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         Zend_Db_Table_Abstract::setDefaultAdapter($db);
         
         
-        $this->bootstrap('multidb');
-        $resource = $this->getPluginResource('multidb');
+        $db2 = $this->bootstrap('db')->getResource('db2');
 
-        $Adapter1 = $resource->getDb('db1');
-        $Adapter2 = $resource->getDb('db2');     
-        Zend_Registry::set('db1', $Adapter1);
-        Zend_Registry::set('db2',$Adapter2);
+        if ((APPLICATION_ENV == 'development')) {
+            $profiler = new Zend_Db_Profiler_Firebug('All DB Queries');
+            $profiler->setEnabled(true);
+
+            // Attach the profiler to your db adapter
+            $db2->setProfiler($profiler);
+        }
+
+        Zend_Registry::set('db2', $db2);
     }
 
     protected function _initRouter()
