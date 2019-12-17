@@ -2165,12 +2165,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                     
                     Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
 
-                    //if ($score > 0) {
-                    //    $score = $this->roundFunction($score);
-                    //}
-
-                    
-
+                    if ($score > 0) {
+                        $score = $this->roundFunction($score);
+                    }
 
                     if ($msg != '' && strlen($msg)>0) { 
                         $message = $msg;
@@ -2228,8 +2225,14 @@ class Ocsv1Controller extends Zend_Controller_Action
                     }
                      * 
                      */
-                    $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
-                    $modelRating->scoreForProject($project_id, $member_id, $score, $message);
+                    
+                    try {
+                        $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
+                        $modelRating->scoreForProject($project_id, $member_id, $score, $message);
+                    } catch (Exception $exc) {
+                        Zend_Registry::get('logger')->err('Error Saving Vote: '. $exc->getTraceAsString());
+                    }
+
 
                     /*
                     if($this->view->product){                    
