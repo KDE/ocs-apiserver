@@ -442,4 +442,12 @@ class Application_Model_ProjectComments
         return $returnValue;
     }
 
+    
+    public function deactiveComment($comment_id){
+        $sql = '
+                UPDATE comments
+                SET comment_active = 0
+                WHERE comment_id = :comment_id';
+        $this->_dataTable->getAdapter()->query($sql, array('comment_id' => $comment_id))->execute();        
+    }
 }

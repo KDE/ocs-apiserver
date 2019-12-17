@@ -300,7 +300,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
         $is_upvote=$score<6 ? false : true;
 
         //$is_exist = (($result!=null) && ($result['rating_id']!=null))?true:false;
-        $modelComments = new Application_Model_ProjectComments();
+        $modelComments = new Application_Model_ProjectComments(array('db' => 'db2'));
 
         if($score<=0){
             // this do cancel old rating .  remove rating & deactive
@@ -321,7 +321,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
             $data['comment_member_id'] =$member_id;
             $data['comment_parent_id'] = 0;
             $data['comment_text'] = $msg;
-            $tableReplies = new Application_Model_ProjectComments();
+            $tableReplies = new Application_Model_ProjectComments(array('db' => 'db2'));
             $result = $tableReplies->save($data);
             $comment_id =  $result->comment_id;
 
