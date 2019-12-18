@@ -364,7 +364,8 @@ class Application_Model_ProjectComments
      */
     public function save($data)
     {
-        return $this->_dataTable->save($data);
+        $writer = new Application_Model_DbTable_Comments(array('db' => 'db2'));
+        return $writer->save($data);
     }
 
     public function setAllCommentsForUserDeleted($member_id)

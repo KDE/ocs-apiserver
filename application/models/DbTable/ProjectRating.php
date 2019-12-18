@@ -321,8 +321,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
             $data['comment_member_id'] =$member_id;
             $data['comment_parent_id'] = 0;
             $data['comment_text'] = $msg;
-            $tableReplies = new Application_Model_ProjectComments(array('db' => 'db2'));
-            $result = $tableReplies->save($data);
+            $result = $modelComments->save($data);
             $comment_id =  $result->comment_id;
 
             // get old rating

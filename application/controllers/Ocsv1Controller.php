@@ -2235,8 +2235,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                         $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
                         $modelRating->scoreForProject($project_id, $member_id, $score, $message);
                     } catch (Exception $exc) {
-                        Zend_Registry::get('logger')->err('Error Saving Vote: '. $exc->getTraceAsString());
-                        $this->_sendErrorResponse(500, $exc->getTraceAsString());
+                        Zend_Registry::get('logger')->err('Error Saving Vote: '. $exc->getMessage() . PHP_EOL . $exc->getTraceAsString());
+                        $this->_sendErrorResponse(500, $exc->getMessage() . PHP_EOL . $exc->getTraceAsString());
                     }
 
 
