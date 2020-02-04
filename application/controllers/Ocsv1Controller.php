@@ -139,8 +139,121 @@ class Ocsv1Controller extends Zend_Controller_Action
         $this->_initRequestParamsAndFormat();
         $this->_initConfig();
         $this->_initResponseHeader();
+        $this->_initAuthorization();
     }
 
+    protected function _initAuthorization()
+    {
+        $authToken = $this->getAuthToken();
+        if ($authToken) {
+            $this->getAuthDataFromToken($authToken);
+            return;
+        }
+        $this->_authenticateUser();
+    }
+
+    protected function getAuthDataFromToken($authToken)
+    {
+        try {
+            $data = Application_Model_Jwt::decode($authToken);
+            if ($data->exp < microtime()) {
+                return;
+            }
+
+            $external_id = $data->sub;
+            if (empty($external_id)) {
+                return;
+            }
+
+            $modelMember = new Application_Model_Member();
+            $member_data = $modelMember->fetchMemberDataByExternalId($external_id);
+            $this->_authData = (object)$member_data->toArray();
+            $auth = Zend_Auth::getInstance();
+            $auth->clearIdentity();
+            $auth->getStorage()->write((object)$member_data->toArray());
+        } catch (Exception $e) {
+            error_log(__METHOD__ . ' :: ' . $e->getMessage());
+        }
+    }
+
+    protected function getAuthToken()
+    {
+        $authHeader = $this->getAuthorizationHeader();
+        list($authToken) = sscanf( $authHeader, "Bearer %s");
+//        return sscanf( $authHeader, "Authorization: Bearer %s");
+
+        return $authToken;
+    }
+
+    /**
+     * @param null $identity
+     * @param null $credential
+     * @param bool $force
+     *
+     * @return bool
+     * @throws Zend_Auth_Adapter_Exception
+     * @throws Zend_Exception
+     *
+     */
+    protected function _authenticateUser($identity = null, $credential = null, $force = false)
+    {
+        if (!$identity && !empty($_SERVER['PHP_AUTH_USER'])) {
+            // Will set user identity or API-Key
+            $identity = $_SERVER['PHP_AUTH_USER'];
+        }
+        if (!$credential && !empty($_SERVER['PHP_AUTH_PW'])) {
+            $credential = $_SERVER['PHP_AUTH_PW'];
+        }
+
+        if (isset($identity) && isset($credential)) {
+            $authModel = new Application_Model_Authorization();
+            $authData = $authModel->getAuthDataFromApi($identity, $credential);
+            if ($authData) {
+                $this->_authData = $authData;
+                Zend_Auth::getInstance()->clearIdentity();
+                Zend_Auth::getInstance()->getStorage()->write($authData);
+
+                return true;
+            }
+        }
+
+        if ($force) {
+            //header('WWW-Authenticate: Basic realm="Your valid user account or api key"');
+            header('WWW-Authenticate: Basic realm="Your valid user account"');
+            header('HTTP/1.0 401 Unauthorized');
+            exit;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get header Authorization
+     * */
+    protected function getAuthorizationHeader()
+    {
+        if (isset($_SERVER['Authorization'])) {
+            return trim($_SERVER["Authorization"]);
+        }
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI but depends on Webserver Config
+            return trim($_SERVER["HTTP_AUTHORIZATION"]);
+        }
+        if (function_exists('apache_request_headers')) {
+            $requestHeaders = apache_request_headers();
+            // Server-side fix for bug in old Android versions (a nice side-effect of this fix means we don't care about capitalization for Authorization)
+            $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
+            //print_r($requestHeaders);
+            if (isset($requestHeaders['Authorization'])) {
+                return trim($requestHeaders['Authorization']);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     *
+     */
     protected function _initUriScheme()
     {
         $this->_uriScheme = 'http';
@@ -166,7 +279,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         // Set request parameters
         switch (strtoupper($_SERVER['REQUEST_METHOD'])) {
             case 'GET':
-                $this->_params = $_GET;
+                $this->_params = $_GET + $this->getAllParams();
                 break;
             case 'PUT':
                 parse_str(file_get_contents('php://input'), $_PUT);
@@ -179,6 +292,14 @@ class Ocsv1Controller extends Zend_Controller_Action
                 Zend_Registry::get('logger')->err(__METHOD__ . ' - request method not supported - ' . $_SERVER['REQUEST_METHOD']);
                 exit('request method not supported');
         }
+
+        // try to find accept header
+        /** @var Zend_Controller_Request_Http $request */
+        $request = $this->getRequest();
+        $accept_header = $request->getHeader('accept');
+        Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($accept_header, true));
+        list($this->_format) = sscanf($accept_header, "application/%s");
+        Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($this->_format, true));
 
         // Set format option
         if (isset($this->_params['format']) && strtolower($this->_params['format']) == 'json') {
@@ -259,13 +380,16 @@ class Ocsv1Controller extends Zend_Controller_Action
         return $clientName;
     }
 
+    /**
+     *
+     */
     protected function _initResponseHeader()
     {
         $duration = 1800; // in seconds
         $expires = gmdate("D, d M Y H:i:s", time() + $duration) . " GMT";
 
         $this->getResponse()
-             ->setHeader('X-FRAME-OPTIONS', 'SAMEORIGIN',true)
+             ->setHeader('X-FRAME-OPTIONS', 'SAMEORIGIN', true)
 //           ->setHeader('Last-Modified', $modifiedTime, true)
              ->setHeader('Expires', $expires, true)->setHeader('Pragma', 'cache', true)
              ->setHeader('Cache-Control', 'max-age=1800, public', true);
@@ -312,6 +436,7 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         header('Pragma: public');
         header('Cache-Control: cache, must-revalidate');
+        header("Access-Control-Allow-Origin: *");
         $duration = 1800; // in seconds
         $expires = gmdate("D, d M Y H:i:s", time() + $duration) . " GMT";
         header('Expires: ' . $expires);
@@ -445,21 +570,23 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function personcheckAction()
     {
-        $identity = null;
-        $credential = null;
-        if (!empty($this->_params['login'])) {
-            $identity = $this->_params['login'];
+        /** @var Zend_Controller_Request_Http $request */
+        $request = $this->getRequest();
+        if (false === $request->isPost()) {
+            $this->_sendErrorResponse(405, "method not allowed");
         }
-        if (!empty($this->_params['password'])) {
-            $credential = $this->_params['password'];
-        }
+        $identity = $this->getParam('login');
+        $credential = $this->getParam('password');
 
         if (!$identity) {
             $this->_sendErrorResponse(101, 'please specify all mandatory fields');
-        } else {
-            if (!$this->_authenticateUser($identity, $credential)) {
-                $this->_sendErrorResponse(102, 'login not valid');
-            }
+        }
+
+        $modelAuth = new Application_Model_Authorization();
+        $authResult = $modelAuth->authenticateCredentials($identity, $credential);
+
+        if (!$authResult->isValid()) {
+            $this->_sendErrorResponse(102, 'login not valid');
         }
 
         if ($this->_format == 'json') {
@@ -470,7 +597,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 'data'       => array(
                     array(
                         'details'  => 'check',
-                        'personid' => $this->_authData->username
+                        'personid' => $authResult->getIdentity()
                     )
                 )
             );
@@ -484,69 +611,13 @@ class Ocsv1Controller extends Zend_Controller_Action
                 'data' => array(
                     'person' => array(
                         'details'  => 'check',
-                        'personid' => array('@text' => $this->_authData->username)
+                        'personid' => array('@text' => $authResult->getIdentity())
                     )
                 )
             );
         }
 
         $this->_sendResponse($response, $this->_format);
-    }
-
-    /**
-     * @param null $identity
-     * @param null $credential
-     * @param bool $force
-     *
-     * @return bool
-     */
-    protected function _authenticateUser($identity = null, $credential = null, $force = false)
-    {
-        ////////////////////////////////////////////////////////
-        // BasicAuth enabled testing site workaround
-        if (strrpos($_SERVER['SERVER_NAME'], 'pling.ws') !== false
-            || strrpos($_SERVER['SERVER_NAME'], 'pling.cc') !== false
-            || strrpos($_SERVER['SERVER_NAME'], 'pling.to') !== false
-            || strrpos($_SERVER['SERVER_NAME'], 'ocs-store.com') !== false) {
-            $authData = new stdClass;
-            $authData->username = 'dummy';
-            $this->_authData = $authData;
-
-            return true;
-        }
-        ////////////////////////////////////////////////////////
-
-        if (!$identity && !empty($_SERVER['PHP_AUTH_USER'])) {
-            // Will set user identity or API-Key
-            $identity = $_SERVER['PHP_AUTH_USER'];
-        }
-        if (!$credential && !empty($_SERVER['PHP_AUTH_PW'])) {
-            $credential = $_SERVER['PHP_AUTH_PW'];
-        }
-
-        $loginMethod = null;
-        //if ($identity && !$credential) {
-        //    $loginMethod = 'api-key';
-        //}
-
-        if ($identity && ($credential || $loginMethod == 'api-key')) {
-            $authModel = new Application_Model_Authorization();
-            $authData = $authModel->getAuthDataFromApi($identity, $credential, $loginMethod);
-            if ($authData) {
-                $this->_authData = $authData;
-
-                return true;
-            }
-        }
-
-        if ($force) {
-            //header('WWW-Authenticate: Basic realm="Your valid user account or api key"');
-            header('WWW-Authenticate: Basic realm="Your valid user account"');
-            header('HTTP/1.0 401 Unauthorized');
-            exit;
-        }
-
-        return false;
     }
 
     public function personselfAction()
@@ -556,12 +627,9 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function persondataAction($self = false)
     {
+        //See Ticket: https://phabricator.kde.org/T11173: we should show some data instead of an error
         $showAll = false;
-        if (!$this->_authenticateUser()) {
-            //See Ticket: https://phabricator.kde.org/T11173: we should show some data insead of an error
-            //$this->_sendErrorResponse(101, 'person not found');
-            $showAll = false;
-        } else {
+        if (Zend_Auth::getInstance()->hasIdentity()) {
             $showAll = true;
         }
 
@@ -579,51 +647,51 @@ class Ocsv1Controller extends Zend_Controller_Action
 
             $member = $tableMember->findActiveMemberByIdentity($username);
 
-            if (!$member) {
+            if (empty($member->member_id)) {
                 $this->_sendErrorResponse(101, 'person not found');
             }
 
             $profilePage = $this->_uriScheme . '://' . $this->_config['user_host'] . '/u/' . $member->username;
-            $avatarUrl = $this->_uriScheme . '://' . $this->_config['user_host'] . '/member/avatar/'. md5($member->mail).'/800';
-            
+            $avatarUrl = $this->_uriScheme . '://' . $this->_config['user_host'] . '/member/avatar/' . md5($member->mail) . '/800';
+
             $userData = array(
-                            'details'              => $showAll?'full':'summary',
-                            'personid'             => $member->username,
-                            'privacy'              => 0,
-                            'privacytext'          => 'public',
-                            'firstname'            => $member->firstname,
-                            'lastname'             => $showAll?$member->lastname:'',
-                            'gender'               => '',
-                            'communityrole'        => '',
-                            'homepage'             => $member->link_website,
-                            'company'              => '',
-                            'avatarpic'            => $avatarUrl,
-                            'avatarpicfound'       => 1,
-                            'bigavatarpic'         => $avatarUrl,
-                            'bigavatarpicfound'    => 1,
-                            'birthday'             => '',
-                            'jobstatus'            => '',
-                            'city'                 => $showAll?$member->city:'',
-                            'country'              => $showAll?$member->country:'',
-                            'latitude'             => '',
-                            'longitude'            => '',
-                            'ircnick'              => '',
-                            'ircchannels'          => '',
-                            'irclink'              => '',
-                            'likes'                => '',
-                            'dontlikes'            => '',
-                            'interests'            => '',
-                            'languages'            => '',
-                            'programminglanguages' => '',
-                            'favouritequote'       => '',
-                            'favouritemusic'       => '',
-                            'favouritetvshows'     => '',
-                            'favouritemovies'      => '',
-                            'favouritebooks'       => '',
-                            'favouritegames'       => '',
-                            'description'          => $showAll?$member->biography:'',
-                            'profilepage'          => $profilePage
-                        );
+                'details'              => $showAll ? 'full' : 'summary',
+                'personid'             => $member->username,
+                'privacy'              => 0,
+                'privacytext'          => 'public',
+                'firstname'            => $member->firstname,
+                'lastname'             => $showAll ? $member->lastname : '',
+                'gender'               => '',
+                'communityrole'        => '',
+                'homepage'             => $member->link_website,
+                'company'              => '',
+                'avatarpic'            => $avatarUrl,
+                'avatarpicfound'       => 1,
+                'bigavatarpic'         => $avatarUrl,
+                'bigavatarpicfound'    => 1,
+                'birthday'             => '',
+                'jobstatus'            => '',
+                'city'                 => $showAll ? $member->city : '',
+                'country'              => $showAll ? $member->country : '',
+                'latitude'             => '',
+                'longitude'            => '',
+                'ircnick'              => '',
+                'ircchannels'          => '',
+                'irclink'              => '',
+                'likes'                => '',
+                'dontlikes'            => '',
+                'interests'            => '',
+                'languages'            => '',
+                'programminglanguages' => '',
+                'favouritequote'       => '',
+                'favouritemusic'       => '',
+                'favouritetvshows'     => '',
+                'favouritemovies'      => '',
+                'favouritebooks'       => '',
+                'favouritegames'       => '',
+                'description'          => $showAll ? $member->biography : '',
+                'profilepage'          => $profilePage
+            );
 
             if ($this->_format == 'json') {
                 $response = array(
@@ -636,45 +704,45 @@ class Ocsv1Controller extends Zend_Controller_Action
                 );
             } else {
                 $userData = array(
-                            'details'              => $showAll?'full':'summary',
-                            'personid'             => array('@text' => $member->username),
-                            'privacy'              => array('@text' => 0),
-                            'privacytext'          => array('@text' => 'public'),
-                            'firstname'            => array('@text' => $member->firstname),
-                            'lastname'             => array('@text' => $showAll?$member->lastname:''),
-                            'gender'               => array('@text' => ''),
-                            'communityrole'        => array('@text' => ''),
-                            'homepage'             => array('@text' => $member->link_website),
-                            'company'              => array('@text' => ''),
-                            'avatarpic'            => array('@text' => $avatarUrl),
-                            'avatarpicfound'       => array('@text' => 1),
-                            'bigavatarpic'         => array('@text' => $avatarUrl),
-                            'bigavatarpicfound'    => array('@text' => 1),
-                            'birthday'             => array('@text' => ''),
-                            'jobstatus'            => array('@text' => ''),
-                            'city'                 => array('@text' => $showAll?$member->city:''),
-                            'country'              => array('@text' => $showAll?$member->country:''),
-                            'latitude'             => array('@text' => ''),
-                            'longitude'            => array('@text' => ''),
-                            'ircnick'              => array('@text' => ''),
-                            'ircchannels'          => array('@text' => ''),
-                            'irclink'              => array('@text' => ''),
-                            'likes'                => array('@text' => ''),
-                            'dontlikes'            => array('@text' => ''),
-                            'interests'            => array('@text' => ''),
-                            'languages'            => array('@text' => ''),
-                            'programminglanguages' => array('@text' => ''),
-                            'favouritequote'       => array('@text' => ''),
-                            'favouritemusic'       => array('@text' => ''),
-                            'favouritetvshows'     => array('@text' => ''),
-                            'favouritemovies'      => array('@text' => ''),
-                            'favouritebooks'       => array('@text' => ''),
-                            'favouritegames'       => array('@text' => ''),
-                            'description'          => array('@text' => $showAll?$member->biography:''),
-                            'profilepage'          => array('@text' => $profilePage)
-                        );
-                
-                
+                    'details'              => $showAll ? 'full' : 'summary',
+                    'personid'             => array('@text' => $member->username),
+                    'privacy'              => array('@text' => 0),
+                    'privacytext'          => array('@text' => 'public'),
+                    'firstname'            => array('@text' => $member->firstname),
+                    'lastname'             => array('@text' => $showAll ? $member->lastname : ''),
+                    'gender'               => array('@text' => ''),
+                    'communityrole'        => array('@text' => ''),
+                    'homepage'             => array('@text' => $member->link_website),
+                    'company'              => array('@text' => ''),
+                    'avatarpic'            => array('@text' => $avatarUrl),
+                    'avatarpicfound'       => array('@text' => 1),
+                    'bigavatarpic'         => array('@text' => $avatarUrl),
+                    'bigavatarpicfound'    => array('@text' => 1),
+                    'birthday'             => array('@text' => ''),
+                    'jobstatus'            => array('@text' => ''),
+                    'city'                 => array('@text' => $showAll ? $member->city : ''),
+                    'country'              => array('@text' => $showAll ? $member->country : ''),
+                    'latitude'             => array('@text' => ''),
+                    'longitude'            => array('@text' => ''),
+                    'ircnick'              => array('@text' => ''),
+                    'ircchannels'          => array('@text' => ''),
+                    'irclink'              => array('@text' => ''),
+                    'likes'                => array('@text' => ''),
+                    'dontlikes'            => array('@text' => ''),
+                    'interests'            => array('@text' => ''),
+                    'languages'            => array('@text' => ''),
+                    'programminglanguages' => array('@text' => ''),
+                    'favouritequote'       => array('@text' => ''),
+                    'favouritemusic'       => array('@text' => ''),
+                    'favouritetvshows'     => array('@text' => ''),
+                    'favouritemovies'      => array('@text' => ''),
+                    'favouritebooks'       => array('@text' => ''),
+                    'favouritegames'       => array('@text' => ''),
+                    'description'          => array('@text' => $showAll ? $member->biography : ''),
+                    'profilepage'          => array('@text' => $profilePage)
+                );
+
+
                 $response = array(
                     'meta' => array(
                         'status'     => array('@text' => 'ok'),
@@ -691,11 +759,10 @@ class Ocsv1Controller extends Zend_Controller_Action
         } // Find a specific list of persons
         else {
             //Only auth users can search here
-            if(!$showAll) {
+            if (!$showAll) {
                 $this->_sendErrorResponse(101, 'data is private');
             }
-            
-            
+
             $limit = 10; // 1 - 100
             $offset = 0;
 
@@ -848,7 +915,7 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'content_categories_' . md5($this->_getNameForStoreClient());
+        $cacheName = 'content_categories_' . md5($this->_getNameForStoreClient() . $this->_format);
 
         $debugMode = (int)$this->getParam('debug') ? (int)$this->getParam('debug') : false;
 
@@ -941,7 +1008,8 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function contentdataAction()
     {
-        $this->_authenticateUser();
+        /* @deprecated use Zend_Auth::getInstance() instead */
+        //$this->_authenticateUser();
 
         $pploadApi = new Ppload_Api(array(
             'apiUri'   => PPLOAD_API_URI,
@@ -1062,7 +1130,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
             $projTags = rtrim($projTags, ",");
         }
-        
+
         if ($this->_format == 'json') {
             $response = array(
                 'status'     => 'ok',
@@ -1344,8 +1412,12 @@ class Ocsv1Controller extends Zend_Controller_Action
 
             $downloads += (int)$file['downloaded_count'];
 
-            $downloadLink =
-                PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
+            $downloadLink = PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
+
+            $payload = array('id' => $file['id'], 'o' => '1');
+            $downloadLink = Application_Model_PpLoad::createDownloadUrlJwt($project->ppload_collection_id,
+                $file['name'], $payload);
+
             $downloadItems['downloadway' . $i] = 1;
             $downloadItems['downloadtype' . $i] = '';
             $downloadItems['downloadprice' . $i] = '0';
@@ -1391,9 +1463,13 @@ class Ocsv1Controller extends Zend_Controller_Action
      * @param Ppload_Api $pploadApi
      * @param boolean    $debugMode Is debug mode
      *
+     * @param bool       $nocache
      * @return array
+     * @throws Zend_Auth_Adapter_Exception
+     * @throws Zend_Auth_Storage_Exception
      * @throws Zend_Cache_Exception
      * @throws Zend_Db_Select_Exception
+     * @throws Zend_Db_Statement_Exception
      * @throws Zend_Exception
      */
     protected function fetchCategoryContent(
@@ -1537,7 +1613,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         if (!empty($this->_params['distribution'])) {
             // distribution parameter: comma separated list of ids
         }
-        
+
         if (!empty($this->_params['showfavorites'])) {
             $identity = null;
             $credential = null;
@@ -1548,19 +1624,20 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $credential = $this->_params['password'];
             }
             $this->_authenticateUser($identity, $credential, true);
-            
+
             $auth = Zend_Auth::getInstance();
             $authData = $auth->getStorage()->read();
-            
-            if(!isset($this->_authData) && isset($authData)) {
+
+            if (!isset($this->_authData) && isset($authData)) {
                 $this->_authData = $authData;
             }
-            
+
             // if = 1 then show auth users favorites
-            if($this->_params['showfavorites'] == 1 && null != $this->_authData) {
+            if ($this->_params['showfavorites'] == 1 && null != $this->_authData) {
                 $member_id = $this->_authData->member_id;
                 $tableProjectSelect->where('project_follower.member_id = ?', $member_id);
-                $tableProjectSelect->setIntegrityCheck(false)->join('project_follower', 'project.project_id = project_follower.project_id', array('project_follower_id'));
+                $tableProjectSelect->setIntegrityCheck(false)->join('project_follower',
+                    'project.project_id = project_follower.project_id', array('project_follower_id'));
             }
         }
 
@@ -1609,7 +1686,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $tableProjectSelect->limit($limit, $offset);
 
-        
+
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $storeName = Zend_Registry::get('store_config')->name;
@@ -1618,9 +1695,9 @@ class Ocsv1Controller extends Zend_Controller_Action
         $contentsList = false;
         $count = 0;
         $isFromCache = false;
-        
+
         //ignore cache, if param nocache is set
-        if($nocache == true) {
+        if ($nocache == true) {
             $projects = $tableProject->fetchAll($tableProjectSelect);
             $counter = $tableProject->getAdapter()->fetchRow('select FOUND_ROWS() AS counter');
             $count = $counter['counter'];
@@ -1643,7 +1720,8 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $count = $counter['counter'];
 
                 if (count($projects) > 0) {
-                    $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi, $projects,
+                    $contentsList = $this->_buildContentList($previewPicSize, $smallPreviewPicSize, $pploadApi,
+                        $projects,
                         implode(' ', $selectAndFiles->getPart('where')));
                     if (false === $hasSearchPart) {
                         $cache->save($contentsList, $cacheName, array(), 900);
@@ -1696,12 +1774,11 @@ class Ocsv1Controller extends Zend_Controller_Action
     }
 
     /**
-     * @param $previewPicSize
-     * @param $smallPreviewPicSize
-     * @param $pploadApi
-     * @param $projects
+     * @param        $previewPicSize
+     * @param        $smallPreviewPicSize
+     * @param        $pploadApi
+     * @param        $projects
      * @param String $selectWhereString
-
      * @return array
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
@@ -1866,7 +1943,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             $tableProject = new Application_Model_Project();
             $project = $tableProject->fetchRow($tableProject->select()
                                                             ->where('project_id = ?', $this->getParam('contentid'))
-                                                            ->where('status = ?',Application_Model_Project::PROJECT_ACTIVE));
+                                                            ->where('status = ?',
+                                                                Application_Model_Project::PROJECT_ACTIVE));
         }
 
         if (!$project) {
@@ -1937,8 +2015,11 @@ class Ocsv1Controller extends Zend_Controller_Action
 
                 $fileTags = rtrim($fileTags, ",");
 
-                $downloadLink =
-                    PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
+                $downloadLink = PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
+
+                $payload = array('id' => $file['id'], 'o' => '1');
+                $downloadLink = Application_Model_PpLoad::createDownloadUrlJwt($project->ppload_collection_id,
+                    $file['name'], $payload);
 
                 if ($this->_format == 'json') {
                     $response = array(
@@ -2003,7 +2084,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             $tableProject = new Application_Model_Project();
             $project = $tableProject->fetchRow($tableProject->select()
                                                             ->where('project_id = ?', $this->getParam('contentid'))
-                                                            ->where('status = ?',Application_Model_Project::PROJECT_ACTIVE));
+                                                            ->where('status = ?',
+                                                                Application_Model_Project::PROJECT_ACTIVE));
         }
 
         if (!$project) {
@@ -2141,40 +2223,37 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         //20191215 enable rating
         //$this->_sendErrorResponse(405, "method not allowed");
-        
-        
-        
-        
-                
+
+
         if ($this->_authenticateUser(null, null, true)) {
-            
+
             Zend_Registry::get('logger')->info('Start Voting');
-            
-            if($this->hasParam('contentid') && $this->hasParam('vote')) { 
+
+            if ($this->hasParam('contentid') && $this->hasParam('vote')) {
                 $score = (int)$this->getParam('vote');
-                
-                if($score >= 0 && $score <= 100) { 
+
+                if ($score >= 0 && $score <= 100) {
                     $msg = '';
-                    
-                    if($this->hasParam('msg')) {
+
+                    if ($this->hasParam('msg')) {
                         $msg = trim($this->getParam('msg'));
                     }
-                    
+
                     $project_id = (int)$this->getParam('contentid');
                     $status = 'ok';
                     $message = '';
-                    
-                    Zend_Registry::get('logger')->info('ProjectId: '. $project_id . ', Vote: ' . $score);
+
+                    Zend_Registry::get('logger')->info('ProjectId: ' . $project_id . ', Vote: ' . $score);
 
                     if ($score > 0) {
                         $score = $this->roundFunction($score) / 10;
                     }
-                    
-                    if($score == 0) {
+
+                    if ($score == 0) {
                         $score = 1;
                     }
 
-                    if ($msg != '' && strlen($msg)>0) { 
+                    if ($msg != '' && strlen($msg) > 0) {
                         $message = $msg;
                     } else {
                         //Get message via score
@@ -2215,12 +2294,12 @@ class Ocsv1Controller extends Zend_Controller_Action
                         }
                     }
 
-                    Zend_Registry::get('logger')->info('Comment: '. $message);
+                    Zend_Registry::get('logger')->info('Comment: ' . $message);
 
                     //$product = $this->loadProductInfo((int)$this->getParam('p'));
                     $member_id = $this->_authData->member_id;
 
-                    Zend_Registry::get('logger')->info('MemberId: '. $member_id);
+                    Zend_Registry::get('logger')->info('MemberId: ' . $member_id);
 
                     /*
                     if($this->view->product->member_id==$this->view->member_id)
@@ -2230,12 +2309,12 @@ class Ocsv1Controller extends Zend_Controller_Action
                     }
                      * 
                      */
-                    
+
                     try {
-                        $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));                
+                        $modelRating = new Application_Model_DbTable_ProjectRating(array('db' => 'db2'));
                         $modelRating->scoreForProject($project_id, $member_id, $score, $message);
                     } catch (Exception $exc) {
-                        Zend_Registry::get('logger')->err('Error Saving Vote: '. $exc->getMessage() . PHP_EOL . $exc->getTraceAsString());
+                        Zend_Registry::get('logger')->err('Error Saving Vote: ' . $exc->getMessage() . PHP_EOL . $exc->getTraceAsString());
                         $this->_sendErrorResponse(500, $exc->getMessage() . PHP_EOL . $exc->getTraceAsString());
                     }
 
@@ -2254,7 +2333,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                             'statuscode' => 100,
                             'message'    => $message,
                             'data'       => '',
-                            'score' =>$score
+                            'score'      => $score
                         );
                     } else {
                         $response = array(
@@ -2262,32 +2341,48 @@ class Ocsv1Controller extends Zend_Controller_Action
                                 'status'     => array('@text' => $status),
                                 'statuscode' => array('@text' => 100),
                                 'message'    => array('@text' => $message),
-                                'score' => array('@text' => $score)
+                                'score'      => array('@text' => $score)
                             ),
                             'data' => array('@text' => '')
                         );
                     }
 
-                    Zend_Registry::get('logger')->info('Done: '. json_encode($response));
+                    Zend_Registry::get('logger')->info('Done: ' . json_encode($response));
 
                     //$this->_helper->json(array('status' => $status, 'message' => $message, 'data' => '','laplace_score' =>$this->view->product->laplace_score));
 
                     $this->_sendResponse($response, $this->_format);
                 } else {
-            
+
                     $this->_sendErrorResponse(101, 'please specify all mandatory fields');
-            
+
                 }
-                
+
             } else {
-            
+
                 $this->_sendErrorResponse(101, 'please specify all mandatory fields');
-            
+
             }
         } else {
             $this->_sendErrorResponse(102, 'login not valid');
         }
-        
+
+    }
+
+    /**
+     * @param $n
+     * @return float|int
+     */
+    function roundFunction($n)
+    {
+        // Smaller multiple
+        $a = (int)($n / 10) * 10;
+
+        // Larger multiple
+        $b = ($a + 10);
+
+        // Return of closest of two
+        return ($n - $a > $b - $n) ? $b : $a;
     }
 
     /**
@@ -2336,18 +2431,26 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         return $parsedTags;
     }
-    
-    
-    function roundFunction($n)  
-    {  
-        // Smaller multiple  
-        $a = (int)($n / 10) * 10;  
 
-        // Larger multiple  
-        $b = ($a + 10);  
+    /**
+     * Gets a parameter from the {@link $_request Request object}.  If the
+     * parameter does not exist, NULL will be returned.
+     *
+     * If the parameter does not exist and $default is set, then
+     * $default will be returned instead of NULL.
+     *
+     * @param string $paramName
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getParam($paramName, $default = null)
+    {
+        $value = $this->_params[$paramName];
+        if ((null === $value || '' === $value) && (null !== $default)) {
+            $value = $default;
+        }
 
-        // Return of closest of two  
-        return ($n - $a > $b - $n) ? $b : $a;  
-    }  
+        return $value;
+    }
 
 }

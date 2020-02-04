@@ -26,17 +26,17 @@ class Local_Tools_ParseDomain
 {
 
     /**
-     * @param $domain
      * @param bool $debug
      * @return string
      */
-    public static function get_domain($domain, $debug = false)
+    public static function get_domain($debug = false)
     {
-        if (false == isset($domain)) {
-            return null;
-        }
+        //Note the HTTP Host header may includes the port.
+        //$host = strtok($_SERVER['HTTP_HOST'], ':');
+        //$host = parse_url($_SERVER['HTTP_HOST'],PHP_URL_HOST);
+        list($host) = explode(':', $_SERVER['HTTP_HOST']);
 
-        $original = $domain = strtolower($domain);
+        $original = $domain = strtolower($host);
         if (filter_var($domain, FILTER_VALIDATE_IP)) {
             return $domain;
         }
@@ -115,6 +115,7 @@ class Local_Tools_ParseDomain
         }
         $debug ? print("<br>\n" . '<strong style="color:gray">&laquo;</strong> Done parsing: <span style="color:red">' . $original . '</span> as <span style="color:blue">' . join('.',
                 $arr) . "</span><br>\n") : false;
+
         return join('.', $arr);
     }
 

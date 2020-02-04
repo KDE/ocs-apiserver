@@ -99,7 +99,7 @@ class Application_Model_Authorization
      * @throws Zend_Auth_Adapter_Exception
      * @throws Zend_Exception
      */
-    protected function authenticateCredentials($identity, $credential, $loginMethod = null)
+    public function authenticateCredentials($identity, $credential, $loginMethod = null)
     {
         /** @var Local_Auth_Adapter_Ocs $authAdapter */
         $authAdapter = Local_Auth_AdapterFactory::getAuthAdapter($identity, $credential, $loginMethod);
@@ -290,12 +290,12 @@ class Application_Model_Authorization
      * @param string|int $identity
      *
      * @return object
-     * @throws Zend_Exception
      */
     protected function getAuthUserData($identifier, $identity)
     {
         $dataTable = $this->_dataTable;
-        $where = $dataTable->select()->where($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?', $identity);
+        $where = $dataTable->select()->where($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?',
+            $identity);
         $resultRow = $dataTable->fetchRow($where)->toArray();
         unset($resultRow['password']);
 
@@ -306,7 +306,6 @@ class Application_Model_Authorization
      * @param string $identity
      *
      * @return null|object
-     * @throws Zend_Exception
      */
     public function getAuthUserDataFromUnverified($identity)
     {
@@ -345,6 +344,7 @@ class Application_Model_Authorization
         if ($authResult->isValid()) {
             Zend_Session::regenerateId();
             $this->_storeAuthSessionData();
+
             return $this->_authUserData;
         }
 
