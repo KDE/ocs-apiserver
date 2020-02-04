@@ -35,13 +35,11 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
      */
     protected function _initSessionManagement()
     {
-//        $session = $this->bootstrap('session');
-//        $domain = Local_Tools_ParseDomain::get_domain();
-//        Zend_Session::setOptions(array('cookie_domain'   => $domain));
-//        Zend_Session::start();
-//        $config = $this->getOption('settings')['session'];
-//        $session_namespace = new Zend_Session_Namespace($config['auth']['name']);
-//        Zend_Auth::getInstance()->setStorage(new Zend_Auth_Storage_Session($session_namespace->getNamespace()));
+        $session = $this->bootstrap('session');
+        $domain = Local_Tools_ParseDomain::get_domain();
+        Zend_Session::setOptions(array('cookie_domain'   => $domain));
+        Zend_Session::start();
+        Zend_Auth::getInstance()->setStorage(new Zend_Auth_Storage_NonPersistent());
     }
 
     /**

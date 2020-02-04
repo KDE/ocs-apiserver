@@ -142,115 +142,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         $this->_initAuthorization();
     }
 
-    protected function _initAuthorization()
-    {
-        $authToken = $this->getAuthToken();
-        if ($authToken) {
-            $this->getAuthDataFromToken($authToken);
-            return;
-        }
-        $this->_authenticateUser();
-    }
-
-    protected function getAuthDataFromToken($authToken)
-    {
-        try {
-            $data = Application_Model_Jwt::decode($authToken);
-            if ($data->exp < microtime()) {
-                return;
-            }
-
-            $external_id = $data->sub;
-            if (empty($external_id)) {
-                return;
-            }
-
-            $modelMember = new Application_Model_Member();
-            $member_data = $modelMember->fetchMemberDataByExternalId($external_id);
-            $this->_authData = (object)$member_data->toArray();
-            $auth = Zend_Auth::getInstance();
-            $auth->clearIdentity();
-            $auth->getStorage()->write((object)$member_data->toArray());
-        } catch (Exception $e) {
-            error_log(__METHOD__ . ' :: ' . $e->getMessage());
-        }
-    }
-
-    protected function getAuthToken()
-    {
-        $authHeader = $this->getAuthorizationHeader();
-        list($authToken) = sscanf( $authHeader, "Bearer %s");
-//        return sscanf( $authHeader, "Authorization: Bearer %s");
-
-        return $authToken;
-    }
-
-    /**
-     * @param null $identity
-     * @param null $credential
-     * @param bool $force
-     *
-     * @return bool
-     * @throws Zend_Auth_Adapter_Exception
-     * @throws Zend_Exception
-     *
-     */
-    protected function _authenticateUser($identity = null, $credential = null, $force = false)
-    {
-        if (!$identity && !empty($_SERVER['PHP_AUTH_USER'])) {
-            // Will set user identity or API-Key
-            $identity = $_SERVER['PHP_AUTH_USER'];
-        }
-        if (!$credential && !empty($_SERVER['PHP_AUTH_PW'])) {
-            $credential = $_SERVER['PHP_AUTH_PW'];
-        }
-
-        if (isset($identity) && isset($credential)) {
-            $authModel = new Application_Model_Authorization();
-            $authData = $authModel->getAuthDataFromApi($identity, $credential);
-            if ($authData) {
-                $this->_authData = $authData;
-                Zend_Auth::getInstance()->clearIdentity();
-                Zend_Auth::getInstance()->getStorage()->write($authData);
-
-                return true;
-            }
-        }
-
-        if ($force) {
-            //header('WWW-Authenticate: Basic realm="Your valid user account or api key"');
-            header('WWW-Authenticate: Basic realm="Your valid user account"');
-            header('HTTP/1.0 401 Unauthorized');
-            exit;
-        }
-
-        return false;
-    }
-
-    /**
-     * Get header Authorization
-     * */
-    protected function getAuthorizationHeader()
-    {
-        if (isset($_SERVER['Authorization'])) {
-            return trim($_SERVER["Authorization"]);
-        }
-        if (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI but depends on Webserver Config
-            return trim($_SERVER["HTTP_AUTHORIZATION"]);
-        }
-        if (function_exists('apache_request_headers')) {
-            $requestHeaders = apache_request_headers();
-            // Server-side fix for bug in old Android versions (a nice side-effect of this fix means we don't care about capitalization for Authorization)
-            $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
-            //print_r($requestHeaders);
-            if (isset($requestHeaders['Authorization'])) {
-                return trim($requestHeaders['Authorization']);
-            }
-        }
-
-        return '';
-    }
-
     /**
      *
      */
@@ -391,8 +282,121 @@ class Ocsv1Controller extends Zend_Controller_Action
         $this->getResponse()
              ->setHeader('X-FRAME-OPTIONS', 'SAMEORIGIN', true)
 //           ->setHeader('Last-Modified', $modifiedTime, true)
-             ->setHeader('Expires', $expires, true)->setHeader('Pragma', 'cache', true)
+             ->setHeader('Expires', $expires, true)
+             ->setHeader('Pragma', 'cache', true)
              ->setHeader('Cache-Control', 'max-age=1800, public', true);
+//             ->setHeader("Cache-Control","no-store, no-cache, must-revalidate, max-age=0", true)
+//             ->setHeader("Cache-Control","post-check=0, pre-check=0", true)
+//             ->setHeader("Pragma","no-cache", true);
+    }
+
+    protected function _initAuthorization()
+    {
+        $authToken = $this->getAuthToken();
+        if ($authToken) {
+            $this->getAuthDataFromToken($authToken);
+            return;
+        }
+        $this->_authenticateUser();
+    }
+
+    protected function getAuthToken()
+    {
+        $authHeader = $this->getAuthorizationHeader();
+        list($authToken) = sscanf( $authHeader, "Bearer %s");
+//        return sscanf( $authHeader, "Authorization: Bearer %s");
+
+        return $authToken;
+    }
+
+    /**
+     * Get header Authorization
+     * */
+    protected function getAuthorizationHeader()
+    {
+        if (isset($_SERVER['Authorization'])) {
+            return trim($_SERVER["Authorization"]);
+        }
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI but depends on Webserver Config
+            return trim($_SERVER["HTTP_AUTHORIZATION"]);
+        }
+        if (function_exists('apache_request_headers')) {
+            $requestHeaders = apache_request_headers();
+            // Server-side fix for bug in old Android versions (a nice side-effect of this fix means we don't care about capitalization for Authorization)
+            $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
+            //print_r($requestHeaders);
+            if (isset($requestHeaders['Authorization'])) {
+                return trim($requestHeaders['Authorization']);
+            }
+        }
+
+        return '';
+    }
+
+    protected function getAuthDataFromToken($authToken)
+    {
+        try {
+            $data = Application_Model_Jwt::decode($authToken);
+            if ($data->exp < microtime()) {
+                return;
+            }
+
+            $external_id = $data->sub;
+            if (empty($external_id)) {
+                return;
+            }
+
+            $modelMember = new Application_Model_Member();
+            $member_data = $modelMember->fetchMemberDataByExternalId($external_id);
+            $this->_authData = (object)$member_data->toArray();
+            $auth = Zend_Auth::getInstance();
+            $auth->clearIdentity();
+            $auth->getStorage()->write((object)$member_data->toArray());
+        } catch (Exception $e) {
+            error_log(__METHOD__ . ' :: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @param null $identity
+     * @param null $credential
+     * @param bool $force
+     *
+     * @return bool
+     * @throws Zend_Auth_Adapter_Exception
+     * @throws Zend_Exception
+     *
+     */
+    protected function _authenticateUser($identity = null, $credential = null, $force = false)
+    {
+        if (!$identity && !empty($_SERVER['PHP_AUTH_USER'])) {
+            // Will set user identity or API-Key
+            $identity = $_SERVER['PHP_AUTH_USER'];
+        }
+        if (!$credential && !empty($_SERVER['PHP_AUTH_PW'])) {
+            $credential = $_SERVER['PHP_AUTH_PW'];
+        }
+
+        if (isset($identity) && isset($credential)) {
+            $authModel = new Application_Model_Authorization();
+            $authData = $authModel->getAuthDataFromApi($identity, $credential);
+            if ($authData) {
+                $this->_authData = $authData;
+                Zend_Auth::getInstance()->clearIdentity();
+                Zend_Auth::getInstance()->getStorage()->write($authData);
+
+                return true;
+            }
+        }
+
+        if ($force) {
+            //header('WWW-Authenticate: Basic realm="Your valid user account or api key"');
+            header('WWW-Authenticate: Basic realm="Your valid user account"');
+            header('HTTP/1.0 401 Unauthorized');
+            exit;
+        }
+
+        return false;
     }
 
     public function indexAction()
@@ -618,6 +622,27 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         $this->_sendResponse($response, $this->_format);
+    }
+
+    /**
+     * Gets a parameter from the {@link $_request Request object}.  If the
+     * parameter does not exist, NULL will be returned.
+     *
+     * If the parameter does not exist and $default is set, then
+     * $default will be returned instead of NULL.
+     *
+     * @param string $paramName
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getParam($paramName, $default = null)
+    {
+        $value = $this->_params[$paramName];
+        if ((null === $value || '' === $value) && (null !== $default)) {
+            $value = $default;
+        }
+
+        return $value;
     }
 
     public function personselfAction()
@@ -1338,9 +1363,9 @@ class Ocsv1Controller extends Zend_Controller_Action
             $cacheName .= '_' . md5($fileIds);
         }
 
-        if (false !== ($pploadInfo = $cache->load($cacheName))) {
-            return $pploadInfo;
-        }
+//        if (false !== ($pploadInfo = $cache->load($cacheName))) {
+//            return $pploadInfo;
+//        }
 
         $tagTable = new Application_Model_Tags();
 
@@ -1415,8 +1440,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $downloadLink = PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
 
             $payload = array('id' => $file['id'], 'o' => '1');
-            $downloadLink = Application_Model_PpLoad::createDownloadUrlJwt($project->ppload_collection_id,
-                $file['name'], $payload);
+            $downloadLink = Application_Model_PpLoad::createDownloadUrlJwt($project->ppload_collection_id, $file['name'], $payload);
 
             $downloadItems['downloadway' . $i] = 1;
             $downloadItems['downloadtype' . $i] = '';
@@ -2305,9 +2329,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                     if($this->view->product->member_id==$this->view->member_id)
                     {
                         $this->_helper->json(array('status' => 'error', 'message' => ' Not allowed. ', 'data' => ''));
-                        return;   
+                        return;
                     }
-                     * 
+                     *
                      */
 
                     try {
@@ -2320,11 +2344,11 @@ class Ocsv1Controller extends Zend_Controller_Action
 
 
                     /*
-                    if($this->view->product){                    
+                    if($this->view->product){
                         //Send a notification to the owner
-                        $this->sendNotificationToOwner($this->view->product, Default_Model_HtmlPurify::purify($this->getParam('msg')));                   
+                        $this->sendNotificationToOwner($this->view->product, Default_Model_HtmlPurify::purify($this->getParam('msg')));
                     }
-                     * 
+                     *
                      */
 
                     if ($this->_format == 'json') {
@@ -2430,27 +2454,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         return $parsedTags;
-    }
-
-    /**
-     * Gets a parameter from the {@link $_request Request object}.  If the
-     * parameter does not exist, NULL will be returned.
-     *
-     * If the parameter does not exist and $default is set, then
-     * $default will be returned instead of NULL.
-     *
-     * @param string $paramName
-     * @param mixed $default
-     * @return mixed
-     */
-    public function getParam($paramName, $default = null)
-    {
-        $value = $this->_params[$paramName];
-        if ((null === $value || '' === $value) && (null !== $default)) {
-            $value = $default;
-        }
-
-        return $value;
     }
 
 }
