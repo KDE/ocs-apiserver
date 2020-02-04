@@ -129,6 +129,8 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     protected $_params = array();
 
+    protected $_allowed_format = array('json', 'xml');
+
     /**
      * @throws Zend_Exception
      */
@@ -179,6 +181,9 @@ class Ocsv1Controller extends Zend_Controller_Action
             case 'POST':
                 $this->_params = $_POST;
                 break;
+            case 'OPTIONS':
+                header('Allow: GET,POST');
+                $this->_sendResponse(null, 'json');
             default:
                 Zend_Registry::get('logger')->err(__METHOD__ . ' - request method not supported - ' . $_SERVER['REQUEST_METHOD']);
                 exit('request method not supported');
@@ -189,8 +194,11 @@ class Ocsv1Controller extends Zend_Controller_Action
         $request = $this->getRequest();
         $accept_header = $request->getHeader('accept');
         Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($accept_header, true));
-        list($this->_format) = sscanf($accept_header, "application/%s");
+        list($format) = sscanf($accept_header, "application/%s");
         Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($this->_format, true));
+        if (in_array(strtolower($format), $this->_allowed_format)) {
+            $this->_format = $format;
+        }
 
         // Set format option
         if (isset($this->_params['format']) && strtolower($this->_params['format']) == 'json') {
@@ -440,7 +448,11 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         header('Pragma: public');
         header('Cache-Control: cache, must-revalidate');
+
         header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Headers: authorization");
+        header("Access-Control-Request-Method: GET,POST,OPTIONS");
+
         $duration = 1800; // in seconds
         $expires = gmdate("D, d M Y H:i:s", time() + $duration) . " GMT";
         header('Expires: ' . $expires);
