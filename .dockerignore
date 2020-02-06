@@ -1,0 +1,8 @@
+.idea*
+.docker*
+.docker_init*
+docker-compose.yml
+Dockerfile*
+data/cache/*
+data/cache/sessions/*
+data/logs/*

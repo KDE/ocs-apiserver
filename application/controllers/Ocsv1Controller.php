@@ -450,7 +450,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         header('Cache-Control: cache, must-revalidate');
 
         header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Headers: authorization");
+        header("Access-Control-Allow-Headers: Accept,Authorization,X-Requested-With");
         header("Access-Control-Request-Method: GET,POST,OPTIONS");
 
         $duration = 1800; // in seconds
@@ -1099,7 +1099,7 @@ class Ocsv1Controller extends Zend_Controller_Action
     ) {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_fetch_content_by_id_' . $contentId;
+        $cacheName = 'api_fetch_content_by_id_' . $contentId . $this->_format;
 
         if (($response = $cache->load($cacheName))) {
             return $response;
@@ -1523,16 +1523,6 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         $storeTags = Zend_Registry::isRegistered('config_store_tags') ? Zend_Registry::get('config_store_tags') : null;
 
-        /*
-        if ($storeTags) {
-            $tableProjectSelect->join(array(
-                'tags' => new Zend_Db_Expr('(SELECT DISTINCT project_id FROM stat_project_tagids WHERE tag_id in ('
-                    . implode(',', $storeTags) . '))')
-            ), 'project.project_id = tags.project_id', array());
-        }
-         *
-         */
-
         if ($storeTags) {
             $tagList = $storeTags;
             //build where statement für projects
@@ -1596,7 +1586,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $tagList = array($this->_params['tags']);
             }
 
-            //build where statement für projects
+            //build where statement for projects
             $selectAnd = $tableProject->select();
             $selectAndFiles = $tableProject->select();
 
@@ -1651,23 +1641,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         if (!empty($this->_params['showfavorites'])) {
-            $identity = null;
-            $credential = null;
-            if (!empty($this->_params['login'])) {
-                $identity = $this->_params['login'];
-            }
-            if (!empty($this->_params['password'])) {
-                $credential = $this->_params['password'];
-            }
-            $this->_authenticateUser($identity, $credential, true);
-
-            $auth = Zend_Auth::getInstance();
-            $authData = $auth->getStorage()->read();
-
-            if (!isset($this->_authData) && isset($authData)) {
-                $this->_authData = $authData;
-            }
-
             // if = 1 then show auth users favorites
             if ($this->_params['showfavorites'] == 1 && null != $this->_authData) {
                 $member_id = $this->_authData->member_id;
@@ -1726,8 +1699,8 @@ class Ocsv1Controller extends Zend_Controller_Action
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $storeName = Zend_Registry::get('store_config')->name;
-        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName);
-        $cacheNameCount = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName) . '_count';
+        $cacheName = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName . '_' . $this->_format);
+        $cacheNameCount = 'api_fetch_category_' . md5($tableProjectSelect->__toString() . '_' . $selectAndFiles->__toString() . '_' . $storeName . '_' . $this->_format) . '_count';
         $contentsList = false;
         $count = 0;
         $isFromCache = false;
@@ -1970,8 +1943,6 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function contentdownloadAction()
     {
-        $this->_authenticateUser();
-
         $project = null;
         $file = null;
 
@@ -2054,8 +2025,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $downloadLink = PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
 
                 $payload = array('id' => $file['id'], 'o' => '1');
-                $downloadLink = Application_Model_PpLoad::createDownloadUrlJwt($project->ppload_collection_id,
-                    $file['name'], $payload);
+                $downloadLink = Application_Model_PpLoad::createDownloadUrlJwt($project->ppload_collection_id, $file['name'], $payload);
 
                 if ($this->_format == 'json') {
                     $response = array(
@@ -2112,8 +2082,6 @@ class Ocsv1Controller extends Zend_Controller_Action
 
     public function contentpreviewpicAction()
     {
-        $this->_authenticateUser();
-
         $project = null;
 
         if ($this->getParam('contentid')) {
