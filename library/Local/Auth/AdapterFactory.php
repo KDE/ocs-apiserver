@@ -1,11 +1,11 @@
 <?php
 
 /**
- *  ocs-apiserver
+ *  ocs-webserver
  *
  *  Copyright 2016 by pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ *    This file is part of ocs-webserver.
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Affero General Public License as
@@ -32,29 +32,63 @@ class Local_Auth_AdapterFactory
     /**
      * @param null $userIdentity
      * @param null $loginMethod
+     *
      * @return Local_Auth_Adapter_Interface
+     * @throws Zend_Auth_Adapter_Exception
+     * @throws Zend_Exception
      */
-    public static function getAuthAdapter($userIdentity = null, $loginMethod = null)
+    public static function getAuthAdapter($userIdentity = null, $credential = null, $loginMethod = null)
     {
         if (empty($loginMethod)) {
-            $loginMethod = self::findAlternativeMethod($userIdentity);
+            $loginMethod = self::detectHashMethod($userIdentity, $credential);
         }
 
         return self::createAuthAdapter($loginMethod);
     }
 
-    protected static function findAlternativeMethod($identity)
+    /**
+     * @param $identity
+     *
+     * @return string
+     */
+    protected static function detectHashMethod($identity, $credential)
     {
-        $modelMember = new Application_Model_Member();
-        $memberData = $modelMember->findActiveMemberByIdentity($identity);
+        //$modelMember = new Application_Model_Member();
+        //$memberData = $modelMember->findActiveMemberByIdentity($identity, $credential);
+        $validator = new Zend_Validate_EmailAddress();
+        if ($validator->isValid($identity)) {
+            $sql = "SELECT * FROM member AS m WHERE mail = :identity AND (`password` = :passHive OR `password` = :passOcs)";
+        } else {
+            $sql = "SELECT * FROM member AS m WHERE username = :identity AND (`password` = :passHive OR `password` = :passOcs)";
+        }
 
-        if ($modelMember->isHiveUser($memberData)) {
+        $memberData = Zend_Db_Table::getDefaultAdapter()->fetchRow($sql, array('identity' => $identity,
+                                                                               'passHive' => Local_Auth_Adapter_Ocs::getEncryptedPassword($credential, Application_Model_DbTable_Member::PASSWORD_TYPE_HIVE),
+                                                                               'passOcs' => Local_Auth_Adapter_Ocs::getEncryptedPassword($credential, Application_Model_DbTable_Member::PASSWORD_TYPE_OCS)
+            )
+        );
+
+        if (count($memberData) == 0) {
+            return self::LOGIN_DEFAULT;
+        }
+
+        if (Application_Model_Member::PASSWORD_TYPE_HIVE == $memberData['password_type']) {
             return self::LOGIN_HIVE;
         }
+        //if ($modelMember->isHiveUser($memberData)) {
+        //    return self::LOGIN_HIVE;
+        //}
 
         return self::LOGIN_DEFAULT;
     }
 
+    /**
+     * @param $provider
+     *
+     * @return Local_Auth_Adapter_Ocs|Local_Auth_Adapter_RememberMe|Local_Auth_Adapter_SsoToken
+     * @throws Zend_Auth_Adapter_Exception
+     * @throws Zend_Exception
+     */
     protected static function createAuthAdapter($provider)
     {
         switch ($provider) {

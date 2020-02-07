@@ -30,6 +30,19 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
     protected $_router = false;
 
     /**
+     * @throws Zend_Exception
+     * @throws Zend_Session_Exception
+     */
+    protected function _initSessionManagement()
+    {
+        $session = $this->bootstrap('session');
+        $domain = Local_Tools_ParseDomain::get_domain();
+        Zend_Session::setOptions(array('cookie_domain'   => $domain));
+        Zend_Session::start();
+        Zend_Auth::getInstance()->setStorage(new Zend_Auth_Storage_NonPersistent());
+    }
+
+    /**
      * @return mixed
      */
     protected function _initConfig()
@@ -122,6 +135,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 
     /**
      * @throws Zend_Application_Bootstrap_Exception
+     * @throws Zend_Exception
      */
     protected function _initDbAdapter()
     {
@@ -211,11 +225,12 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         defined('IMAGES_MEDIA_SERVER') || define('IMAGES_MEDIA_SERVER', $imageConfig->media->server);
 
         // ppload
-        $pploadConfig = $appConfig->third_party->ppload;
-        defined('PPLOAD_API_URI') || define('PPLOAD_API_URI', $pploadConfig->api_uri);
-        defined('PPLOAD_CLIENT_ID') || define('PPLOAD_CLIENT_ID', $pploadConfig->client_id);
-        defined('PPLOAD_SECRET') || define('PPLOAD_SECRET', $pploadConfig->secret);
-        defined('PPLOAD_DOWNLOAD_SECRET') || define('PPLOAD_DOWNLOAD_SECRET', $pploadConfig->download_secret);
+        $configFileserver = $appConfig->settings->server->files;
+        defined('PPLOAD_API_URI') || define('PPLOAD_API_URI', $configFileserver->api->uri);
+        defined('PPLOAD_CLIENT_ID') || define('PPLOAD_CLIENT_ID', $configFileserver->api->client_id);
+        defined('PPLOAD_SECRET') || define('PPLOAD_SECRET', $configFileserver->api->client_secret);
+        defined('PPLOAD_HOST') || define('PPLOAD_HOST', $configFileserver->host);
+        defined('PPLOAD_DOWNLOAD_SECRET') || define('PPLOAD_DOWNLOAD_SECRET', $configFileserver->download_secret);
     }
 
     protected function _initGlobalApplicationVars()

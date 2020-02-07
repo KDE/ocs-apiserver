@@ -1,0 +1,934 @@
+openapi: "3.0.0"
+info:
+  title: OCS API
+  description: Partial implementation of the Open Collaboration Services v1.6 (https://www.freedesktop.org/wiki/Specifications/open-collaboration-services/).  
+  version: 0.0.1
+  termsOfService: "https://www.opendesktop.org/terms"
+  contact:
+    email: "contect@opendesktop.org"
+  license:
+    name: "GNU Affero General Public License"
+    url: "http://www.gnu.org/licenses/"
+servers:
+  - url: http://localhost:8070/ocs/v1
+    description: DEV server
+  - url: https://api.opendesktop.cc/ocs/v1
+    description: Sandbox server (uses test data)
+  - url: https://api.opendesktop.org/ocs/v1
+    description: Production server (uses live data)
+paths:
+  /content/categories:
+    get:
+      description: Returns a list of available categories
+      tags:
+        - content
+      responses:
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/Category"
+                    xml:
+                      name: "data"
+                      wrapped: true
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  categories:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/Category"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /content/data:
+    get:
+      description: Gets a list of a specific set of contents. 
+      tags: 
+        - content
+      security:
+        - BasicAuth: []
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: categories
+          schema:
+            type: string
+          description: Requested category IDs separated by ",". For backward compatibility with the OCS API specification, the values can also be separated by "x".
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: The part of the name of the item you want to find.
+        - in: query
+          name: tags
+          schema:
+            type: string
+          description: tags parameter values separated by "," and "|" for or filter 
+        - in: query
+          name: xdg_types
+          schema:
+            type: string
+          description: xdg_types parameter values separated by ","
+        - in: query
+          name: ghns_excluded
+          schema:
+            type: string
+        - in: query
+          name: user
+          schema:
+            type: string
+          description: show only contents from one specific user.  
+        - in: query
+          name: showfavorites
+          schema:
+            type: string
+          description: Show only favorites for auhtorized user 
+        - in: query
+          name: sortmode
+          schema:
+            type: string
+            enum: [new,alpha,high,down]
+        - in: query
+          name: page
+          schema:
+            type: string
+          description: The content page. You can control the size of a page with the pagesize argument. The first page is 0, the second is 1, ... 
+        - in: query
+          name: pagesize
+          schema:
+            type: string
+          description: The amount of entries per page.
+      responses:
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/ContentCategories"
+                    xml:
+                      name: "data"
+                      wrapped: true
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  categories:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/ContentCategories"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /content/data/{contentid}:
+    get:
+      description: Read content data of one specific content. 
+      tags:
+        - content
+      parameters: 
+        - in: path
+          name: contentid
+          schema:
+            type: integer
+          required: true
+      responses:
+        200: 
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/ContentDetails"
+                    xml:
+                      name: "data"
+                      wrapped: true
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  categories:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/ContentDetails"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /content/download/{contentid}/{itemid}:
+    get:
+      description: Download or buy one specific content item. links to the package and links to repositories are supported. You get the dowloadlink or the packagename/packagerepository comination in the XML.
+      tags:
+        - content
+      parameters:
+        - in: path
+          name: contentid
+          schema: 
+            type: integer
+          required: true
+        - in: path
+          name: itemid
+          schema:
+            type: integer
+          required: true
+      responses: 
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/ContentDownload"
+                    xml:
+                      name: "data"
+                      wrapped: true
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  categories:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/ContentDownload"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /content/previewpic/{contentid}:
+    get:
+      description: tbd
+      tags:
+       - content
+      parameters:
+        - in: path
+          name: contentid
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: "successful operation"
+  /content/vote/{contentid}:
+    get:
+      description: Vote for one specific content. 
+      tags:
+        - content
+      security:
+        - BasicAuth: []
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: contentid
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: vote
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+          required: true
+        - in: query
+          name: msg
+          schema:
+            type: string
+      responses:
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/MetaVote"
+                  data:
+                    type: "object"
+                    xml:
+                      name: "data"
+                      wrapped: true
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/MetaVote"
+                  data:
+                    type: "object"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /person/check:
+    post:
+      description: Check if the given login and password or the API key is valid. It returns the associated username.
+      tags:
+        - person
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                login:      # <!--- form field name
+                  type: string
+                password:   # <!--- form field name
+                  type: string
+              required:
+                - login
+                - password
+      responses:
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Meta"
+                  - $ref: "#/components/schemas/PersonId"
+              example: 
+                status: "ok"
+                statuscode: "100"
+                message: "ok"
+                data: 
+                  details: "check"
+                  personid: "frank"
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/PersonId"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /person/data/{person_id}:
+    get:
+      description: Response Get the data from one specific person. Unauthorized request => The response contains only the public part of the personal data. Only authenticated users are allowed to access full data set. Authentication is done by sending a Basic HTTP Authorisation header.
+      tags:
+        - person
+      security:
+        - BasicAuth: []
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: person_id
+          schema:
+            type: string
+          required: true
+          description: ID of the user to get
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Meta"
+                  - $ref: "#/components/schemas/Person"
+              example: 
+                status: "ok"
+                statuscode: "100"
+                message: "ok"
+                data:
+                  details: "full"
+                  personid: "dummy"
+                  privacy: 0
+                  privacytext: "public"
+                  firstname: "dummy_firstname"
+                  lastname: "dummy_lastname"
+                  gender: ""
+                  communityrole: ""
+                  homepage: "www.pling.com"
+                  company: ""
+                  avatarpic: "http://www.pling.com/member/avatar/96515bebd8e2ecbd1cf4625035ddf045/800"
+                  avatarpicfound: 1
+                  bigavatarpic: "http://www.pling.com/member/avatar/96515bebd8e2ecbd1cf4625035ddf045/800"
+                  bigavatarpicfound: 1
+                  birthday: ""
+                  jobstatus: ""
+                  city: "Berlin"
+                  country: "Germany"
+                  latitude: ""
+                  longitude: ""
+                  ircnick: ""
+                  ircchannels: ""
+                  irclink: ""
+                  likes: ""
+                  dontlikes: ""
+                  interests: ""
+                  languages: ""
+                  programminglanguages: ""
+                  favouritequote: ""
+                  favouritemusic: ""
+                  favouritetvshows: ""
+                  favouritemovies: ""
+                  favouritebooks: ""
+                  favouritegames: ""
+                  description: ""
+                  profilepage: "http://www.pling.com/u/dummy"
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/Person"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /person/self:
+    get:
+      description: get the data from yourself. Only authenticated users are allowed to access this method. Authentication is done by sending a Basic HTTP Authorisation header. 
+      tags:
+        - person
+      security:
+        - BasicAuth: []
+        - BearerAuth: []
+        - OpenID: []
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Meta"
+                  - $ref: "#/components/schemas/Person"
+              example: 
+                status: "ok"
+                statuscode: "100"
+                message: "ok"
+                data:
+                  details: "full"
+                  personid: "dummy"
+                  privacy: 0
+                  privacytext: "public"
+                  firstname: "dummy_firstname"
+                  lastname: "dummy_lastname"
+                  gender: ""
+                  communityrole: ""
+                  homepage: "www.pling.com"
+                  company: ""
+                  avatarpic: "http://www.pling.com/member/avatar/96515bebd8e2ecbd1cf4625035ddf045/800"
+                  avatarpicfound: 1
+                  bigavatarpic: "http://www.pling.com/member/avatar/96515bebd8e2ecbd1cf4625035ddf045/800"
+                  bigavatarpicfound: 1
+                  birthday: ""
+                  jobstatus: ""
+                  city: "Berlin"
+                  country: "Germany"
+                  latitude: ""
+                  longitude: ""
+                  ircnick: ""
+                  ircchannels: ""
+                  irclink: ""
+                  likes: ""
+                  dontlikes: ""
+                  interests: ""
+                  languages: ""
+                  programminglanguages: ""
+                  favouritequote: ""
+                  favouritemusic: ""
+                  favouritetvshows: ""
+                  favouritemovies: ""
+                  favouritebooks: ""
+                  favouritegames: ""
+                  description: ""
+                  profilepage: "http://www.pling.com/u/dummy"
+            application/xml:
+              schema:
+                type: "object"
+                properties:
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/Person"
+                    xml:
+                      name: "data"
+                      wrapped: true
+                xml:
+                  name: "ocs"
+                  wrapped: true
+  /comments/data/{comment_type}/{contentid}/{second_id}:
+    get:
+      description: Gets a list of comments.
+      tags:
+        - comments
+      security:
+        - BasicAuth: []
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: comment_type
+          schema:
+            type: "string"
+          required: true
+        - in: path
+          name: contentid
+          schema:
+            type: "integer"
+          required: true
+        - in: path
+          name: second_id
+          schema: 
+            type: integer
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: pagesize
+          schema:
+            type: integer
+      responses:
+        200:
+          description: "successful operation"
+components:
+  schemas:
+    Meta:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+        statuscode:
+          type: "integer"
+          format: "int64"
+        message:
+          type: "string"
+        totalitems:
+          type: "integer"
+          format: "int64"
+        itemsperpage:
+          type: "integer"
+          format: "int64"
+      xml:
+        name: "meta"
+    Category:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        display-name:
+          type: "string"
+        parent_id:
+          type: "integer"
+          format: "int64"
+        xdg_type:
+          type: "integer"
+          format: "int64"
+      xml:
+        name: "category"
+    ContentCategories:
+      type: "object"
+      properties:
+        details:
+          type: "string"
+          xml:
+            attribute: true
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        version:
+          type: "string"
+        typeid:
+          type: "integer"
+        typename: 
+          type: "string"
+        xdg_type:
+          type: "string"
+        language:
+          type: "string"
+        personid:
+          type: "string"
+        created:
+          type: "string"
+        changed: 
+          type: "string"
+        downloads:
+          type: "integer"
+        score:
+          type: "integer"
+        summary:
+          type: "string"
+        description:
+          type: "string"
+        comments:
+          type: "integer"
+        ghns_excluded:
+          type: "integer"
+        preview1:
+          type: "string"
+        detailpage:
+          type: "string"
+        tags:
+          type: "string"
+        previewpic1:
+          type: "string"
+        previewpic2:
+          type: "string"
+        smallpreviewpic1:
+          type: "string"
+        smalpreviewpic2:
+          type: "string"
+        downloadway1:
+          type: "integer"
+        downloadtype1:
+          type: "string"
+        downloadprice1:
+          type: "number"
+        downloadlink1:
+          type: "string"
+        downloadname1:
+          type: "string"
+        downloadsize1:
+          type: "integer"
+        downloadgpgfingerprint1:
+          type: "string"
+        downloadgpgsignature1:
+          type: "string"
+        downloadpackagename1:
+          type: "string"
+        downloadrepository1:
+          type: "string"
+        download_package_type1:
+          type: "string"
+        download_package_arch1:
+          type: "string"
+        downloadtags1:
+          type: "string"
+      xml:
+        name: "content"
+    ContentDetails:
+      type: "object"
+      properties:
+        details:
+          type: "string"
+          xml:
+            attribute: true
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        version:
+          type: "string"
+        typeid:
+          type: "integer"
+        typename: 
+          type: "string"
+        xdg_type:
+          type: "string"
+        language:
+          type: "string"
+        personid:
+          type: "string"
+        created:
+          type: "string"
+        changed: 
+          type: "string"
+        downloads:
+          type: "integer"
+        score:
+          type: "integer"
+        summary:
+          type: "string"
+        description:
+          type: "string"
+        changelog:
+          type: "string"
+        feedbackurl:
+          type: "string"
+        homepage:
+          type: "string"
+        homepagetype:
+          type: "string"
+        donationpage:
+          type: "string"
+        comments:
+          type: "integer"
+        commentspage:
+          type: "string"
+        fans:
+          type: "integer"
+        fanspage:
+          type: "string"
+        knowledgebaseentries:
+          type: "integer"
+        knowledgebasepage:
+          type: "string"
+        depend:
+          type: "string"
+        preview1:
+          type: "string"
+        icon:
+          type: "string"
+        video:
+          type: "string"
+        detailpage:
+          type: "string"
+        ghns_excluded:
+          type: "integer"
+        tags:
+          type: "string"
+        previewpic1:
+          type: "string"
+        previewpic2:
+          type: "string"
+        smallpreviewpic1:
+          type: "string"
+        smalpreviewpic2:
+          type: "string"
+        downloadway1:
+          type: "integer"
+        downloadtype1:
+          type: "string"
+        downloadprice1:
+          type: "number"
+        downloadlink1:
+          type: "string"
+        downloadname1:
+          type: "string"
+        downloadsize1:
+          type: "integer"
+        downloadgpgfingerprint1:
+          type: "string"
+        downloadgpgsignature1:
+          type: "string"
+        downloadpackagename1:
+          type: "string"
+        downloadrepository1:
+          type: "string"
+        download_package_type1:
+          type: "string"
+        download_package_arch1:
+          type: "string"
+        downloadtags1:
+          type: "string"        
+      xml:
+        name: "content"
+    ContentDownload:
+      type: "object"
+      properties:
+        details:
+          type: "string"
+          xml:
+            attribute: true
+        downloadway:
+          type: "string"
+        downloadlink:
+          type: "string"
+        mimetype:
+          type: "string"
+        gpgfingerprint:
+          type: "string"
+        gpgsignature:
+          type: "string"
+        packagename:
+          type: "string"
+        repository:
+          type: "string"
+        download_package_type:
+          type: "string"
+        download_package_arch:
+          type: "string"
+        downloadtags:
+          type: "string"
+      xml:
+        name: "content"
+    Person:
+      type: "object"
+      properties:
+        details:
+          type: "string"
+          xml:
+            attribute: true
+        personid:
+          type: "string"
+        privacy:
+          type: "integer"
+          format: "int64"
+        privacytext:
+          type: "string"
+        firstname:
+          type: "string"
+        lastname:
+          type: "string"
+        gender:
+          type: "string"
+        communityrole:
+          type: "string"
+        homepage:
+          type: "string"
+        company:
+          type: "string"
+        avatarpic:
+          type: "string"
+        avatarpicfound:
+          type: "integer"
+        birthday:
+          type: "string"
+        jobstatus:
+          type: "string"
+        city:
+          type: "string"
+        country:
+          type: "string"
+        latitude:
+          type: "string"
+        longtitude:
+          type: "string"
+        ircnick:
+          type: "string"
+        ircchannels:
+          type: "string"
+        irclink:
+          type: "string"
+        likes:
+          type: "integer"
+        dontlikes:
+          type: "integer"
+        interests:
+          type: "string"
+        languages:
+          type: "string"
+        programminglanguages:
+          type: "string"
+        favouritequote:
+          type: "string"
+        favouritemusic:
+          type: "string"
+        favouritetvshows:
+          type: "string"
+        favouritemovies:
+          type: "string"
+        favouritebooks:
+          type: "string"
+        favouritegames:
+          type: "string"
+        description:
+          type: "string"
+        profilepage:
+          type: "string"
+      xml:
+        name: "person"
+    PersonId:
+      type: "object"
+      properties:
+        details:
+          type: "string"
+          xml:
+            attribute: true
+        personid:
+          type: "string"
+      xml:
+        name: "person"
+    MetaVote:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+        statuscode:
+          type: "integer"
+          format: "int64"
+        message:
+          type: "string"
+        score:
+          type: "integer"
+          format: "int64"
+      xml:
+        name: "meta"
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    BearerAuth:
+      type: http
+      scheme: bearer
+#    ApiKeyAuth:
+#      type: apiKey
+#      in: header
+#      name: X-API-Key
+#    OpenID:
+#      type: openIdConnect
+#      openIdConnectUrl: http://localhost:8889/.well-known/openid-configuration
+#    OAuth2:
+#      type: oauth2
+#      flows:
+#        authorizationCode:
+#          authorizationUrl: http://localhost:8889/oauth/authorize
+#          tokenUrl: http://localhost:8889/oauth/token
+#          scopes:
+#            profile: Grants read access
+#            write: Grants write access
+#            admin: Grants access to admin operations

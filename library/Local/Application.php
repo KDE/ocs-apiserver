@@ -22,7 +22,7 @@
  **/
 class Local_Application extends Zend_Application
 {
-    const CACHE_APP_INI = 'cache_app_ini';
+    const CACHE_APP_INI = 'cache_api_ini';
 
     /**
      *
