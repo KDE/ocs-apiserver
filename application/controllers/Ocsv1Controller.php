@@ -193,9 +193,9 @@ class Ocsv1Controller extends Zend_Controller_Action
         /** @var Zend_Controller_Request_Http $request */
         $request = $this->getRequest();
         $accept_header = $request->getHeader('accept');
-        Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($accept_header, true));
+        //Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($accept_header, true));
         list($format) = sscanf($accept_header, "application/%s");
-        Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($this->_format, true));
+        //Zend_Registry::get('logger')->debug(__METHOD__ . ' :: ' . print_r($this->_format, true));
         if (in_array(strtolower($format), $this->_allowed_format)) {
             $this->_format = $format;
         }
@@ -649,7 +649,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      */
     public function getParam($paramName, $default = null)
     {
-        $value = $this->_params[$paramName];
+        $value = isset($this->_params[$paramName]) ? $this->_params[$paramName] : null;
         if ((null === $value || '' === $value) && (null !== $default)) {
             $value = $default;
         }
