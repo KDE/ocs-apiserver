@@ -59,6 +59,7 @@ class Application_Model_PpLoad
      * @param string $file_name
      * @param array  $payload
      * @return string
+     * @throws Zend_Exception
      */
     public static function createDownloadUrlJwt($collection_id, $file_name, array $payload)
     {
@@ -67,9 +68,9 @@ class Application_Model_PpLoad
         $payload['s'] = $hash;
         $payload['t'] = $valid_until;
         try {
-            $session = new Zend_Session_Namespace();
-            $payload['stfp'] = $session->stat_fp;
-            $payload['stip'] = $session->stat_ipv6 ? $session->stat_ipv6 : $session->stat_ipv4;
+            $payload['stfp'] = null;
+            $requestIp = Zend_Controller_Front::getInstance()->getRequest()->getClientIp();
+            $payload['stip'] = $requestIp;
         } catch (Zend_Session_Exception $e) {
             Zend_Registry::get('logger')->err(__METHOD__ . '   ' . $e->getMessage());
 //            error_log(__METHOD__ . '   ' . $e->getMessage());

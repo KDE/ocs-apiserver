@@ -35,10 +35,10 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
      */
     protected function _initSessionManagement()
     {
-        $session = $this->bootstrap('session');
-        $domain = Local_Tools_ParseDomain::get_domain();
-        Zend_Session::setOptions(array('cookie_domain'   => $domain));
-        Zend_Session::start();
+//        $session = $this->bootstrap('session');
+//        $domain = Local_Tools_ParseDomain::get_domain();
+//        Zend_Session::setOptions(array('cookie_domain'   => $domain));
+//        Zend_Session::start();
         Zend_Auth::getInstance()->setStorage(new Zend_Auth_Storage_NonPersistent());
     }
 
