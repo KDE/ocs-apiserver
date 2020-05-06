@@ -2,6 +2,9 @@
 local/*
 *.local*
 .htpasswd*
+.htaccess*
+.docker_init
+Dockerfile.stage
 
 .idea*
 .vagrant*
@@ -79,6 +82,7 @@ nbdist/
 # Sensitive or high-churn files
 .idea/**/dataSources/
 .idea/**/dataSources.ids
+.idea/**/dataSources.xml
 .idea/**/dataSources.local.xml
 .idea/**/sqlDataSources.xml
 .idea/**/dynamic.xml
@@ -119,6 +123,9 @@ atlassian-ide-plugin.xml
 
 # Cursive Clojure plugin
 .idea/replstate.xml
+
+# Ruby plugin and RubyMine
+/.rakeTasks
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
@@ -176,4 +183,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.gitignore.io/api/linux,macos,windows,netbeans,phpstorm
+# End of https://www.gitignore.io/api/phpstorm
+.idea*
+.vagrant*
+/nbproject/private/
+

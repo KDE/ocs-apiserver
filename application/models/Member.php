@@ -27,6 +27,34 @@ class Application_Model_Member extends Application_Model_DbTable_Member
 {
     const CASE_INSENSITIVE = 1;
 
+    public static function cleanAuthMemberForJson(array $authMember)
+    {
+        if (empty($authMember)) {
+            return $authMember;
+        }
+
+        $unwantedKeys = array(
+            'mail'              => 0,
+            'firstname'         => 0,
+            'lastname'          => 0,
+            'street'            => 0,
+            'zip'               => 0,
+            'phone'             => 0,
+            'paypal_mail'       => 0,
+            'gravatar_email'    => 0,
+            'source_pk'         => 0,
+            'source_id'         => 0,
+            'password_old'      => 0,
+            'password_type_old' => 0,
+            'username_old'      => 0,
+            'mail_old' => 0
+        );
+
+        $authMember = array_diff_key($authMember, $unwantedKeys);
+
+        return $authMember;
+    }
+
     /**
      * @param int    $count
      * @param string $orderBy
@@ -170,6 +198,8 @@ class Application_Model_Member extends Application_Model_DbTable_Member
         return $stmnt->rowCount() > 0 ? true : false;
     }
 
+    //User ist mind. 1 jahr alt, user ist supporter, user hat minimum 20 kommentare
+
     /**
      * @param int $member_id
      *
@@ -198,8 +228,6 @@ class Application_Model_Member extends Application_Model_DbTable_Member
         $this->setDeletedInMaterializedView($member_id);
         $this->setDeletedInSubSystems($member_id);
     }
-
-    //User ist mind. 1 jahr alt, user ist supporter, user hat minimum 20 kommentare
 
     private function setMemberProjectsDeleted($member_id)
     {
@@ -248,7 +276,7 @@ class Application_Model_Member extends Application_Model_DbTable_Member
 
     private function setDeletedInSubSystems($member_id)
     {
-        
+
     }
 
     public function validDeleteMemberFromSpam($member_id)
@@ -320,7 +348,7 @@ class Application_Model_Member extends Application_Model_DbTable_Member
 
     private function setActivatedInSubsystems($member_id)
     {
-        
+
     }
 
     /**
@@ -351,6 +379,40 @@ class Application_Model_Member extends Application_Model_DbTable_Member
         }
 
         $result = $this->getAdapter()->query($sql, array('memberId' => $member_id))->fetch();
+
+        $classRow = $this->getRowClass();
+
+        return new $classRow(array('table' => $this, 'stored' => true, 'data' => $result));
+    }
+
+    /**
+     * @param int  $member_id
+     *
+     * @param bool $onlyNotDeleted
+     *
+     * @return Zend_Db_Table_Row
+     * @throws Zend_Db_Statement_Exception
+     */
+    public function fetchMemberDataByExternalId($external_id, $onlyNotDeleted = true)
+    {
+        if (null === $external_id) {
+            return null;
+        }
+
+        $sql = '
+                SELECT `m`.*, `member_email`.`email_address` AS `mail`, IF(ISNULL(`member_email`.`email_checked`),0,1) AS `mail_checked`, `member_email`.`email_address`, `mei`.`external_id`, `mei`.`gitlab_user_id`
+                FROM `member` AS `m`
+                JOIN `member_email` ON `m`.`member_id` = `member_email`.`email_member_id` AND `member_email`.`email_primary` = 1
+                JOIN `member_external_id` AS `mei` ON `mei`.`member_id` = `m`.`member_id`
+                WHERE
+                    (`mei`.`external_id` = :externalId)
+        ';
+
+        if ($onlyNotDeleted) {
+            $sql .= " AND (m.is_deleted = " . self::MEMBER_NOT_DELETED . ")";
+        }
+
+        $result = $this->getAdapter()->query($sql, array('externalId' => $external_id))->fetch();
 
         $classRow = $this->getRowClass();
 
@@ -422,7 +484,8 @@ class Application_Model_Member extends Application_Model_DbTable_Member
                 AND `source_pk` = :userId
                 ";
 
-        return $this->_db->fetchRow($sql, array('sourceId' => Application_Model_Member::SOURCE_HIVE, 'userId' => $user_id));
+        return $this->_db->fetchRow($sql,
+            array('sourceId' => Application_Model_Member::SOURCE_HIVE, 'userId' => $user_id));
     }
 
     /**
@@ -434,15 +497,15 @@ class Application_Model_Member extends Application_Model_DbTable_Member
     public function fetchFollowedMembers($member_id, $limit = null)
     {
         $sql = "
-                SELECT member_follower.member_id,
-                       member_follower.follower_id,
-                       member.*
-                FROM member_follower
-                LEFT JOIN member ON member_follower.member_id = member.member_id
-        		WHERE member_follower.follower_id = :followerId
-                  AND member.is_active = :activeVal
-                GROUP BY member_follower.member_id
-                ORDER BY max(member_follower.member_follower_id) DESC
+                SELECT `member_follower`.`member_id`,
+                       `member_follower`.`follower_id`,
+                       `member`.*
+                FROM `member_follower`
+                LEFT JOIN `member` ON `member_follower`.`member_id` = `member`.`member_id`
+        		WHERE `member_follower`.`follower_id` = :followerId
+                  AND `member`.`is_active` = :activeVal
+                GROUP BY `member_follower`.`member_id`
+                ORDER BY max(`member_follower`.`member_follower_id`) DESC
                 ";
 
         if (null != $limit) {
@@ -562,7 +625,8 @@ class Application_Model_Member extends Application_Model_DbTable_Member
         if (false == isset($userData['password'])) {
             throw new Exception(__METHOD__ . ' - user password is not set.');
         }
-        $userData['password'] = Local_Auth_Adapter_Ocs::getEncryptedPassword($userData['password'],Application_Model_DbTable_Member::SOURCE_LOCAL);
+        $userData['password'] = Local_Auth_Adapter_Ocs::getEncryptedPassword($userData['password'],
+            Application_Model_DbTable_Member::SOURCE_LOCAL);
         if (false == isset($userData['roleId'])) {
             $userData['roleId'] = self::ROLE_ID_DEFAULT;
         }
@@ -896,10 +960,10 @@ class Application_Model_Member extends Application_Model_DbTable_Member
     {
         $sql = "
                   SELECT
-                      count(1) AS count
+                      count(1) AS `count`
                   FROM
-                      comments 
-                  where comment_target_id <> 0 and comment_member_id = :member_id and comment_active = :comment_status
+                      `comments` 
+                  WHERE `comment_target_id` <> 0 AND `comment_member_id` = :member_id AND `comment_active` = :comment_status
                  ";
         $result = $this->_db->fetchRow($sql, array(
             'member_id'      => $member_id,
@@ -1035,7 +1099,8 @@ class Application_Model_Member extends Application_Model_DbTable_Member
                 and  t.member_id = :member_id and t.status_id=2
                 and s.is_active = 1
                 order by c.order";
-        $result = $this->getAdapter()->fetchRow($sql, array('member_id' => $member_id));        
+        $result = $this->getAdapter()->fetchRow($sql, array('member_id' => $member_id));
+
         return $result;
     }
 
@@ -1043,7 +1108,7 @@ class Application_Model_Member extends Application_Model_DbTable_Member
     {
         $sql_page_views =
             "SELECT `created_at` AS `lastactive` FROM `stat_page_views` WHERE `member_id` = :member_id ORDER BY `created_at` DESC LIMIT 1";
-        $sql_activities = "SELECT `time` AS lastactive FROM activity_log WHERE member_id = :member_id ORDER BY `time` DESC LIMIT 1";
+        $sql_activities = "SELECT `time` AS `lastactive` FROM `activity_log` WHERE `member_id` = :member_id ORDER BY `time` DESC LIMIT 1";
 
         $result_page_views = $this->getAdapter()->fetchRow($sql_page_views, array('member_id' => $member_id));
         $result_activities = $this->getAdapter()->fetchRow($sql_activities, array('member_id' => $member_id));
@@ -1102,20 +1167,20 @@ class Application_Model_Member extends Application_Model_DbTable_Member
     public function fetchSupportedProjects($member_id, $limit = null)
     {
         $sql = "
-                SELECT plings.project_id,                       
-                       project.title,
-                       project.image_small,                       
-                       project_category.title AS catTitle,                       
-                       (SELECT SUM(amount) FROM plings WHERE plings.project_id=project.project_id AND plings.status_id=2) AS sumAmount
-                FROM plings
-                 JOIN project ON plings.project_id = project.project_id
-                 JOIN project_category ON project.project_category_id = project_category.project_category_id                 
-                WHERE plings.status_id IN (2,3,4)
-                  AND plings.member_id = :member_id
-                  AND project.status = :project_status
-                  AND project.type_id = 1
-                GROUP BY plings.project_id
-                ORDER BY sumAmount DESC
+                SELECT `plings`.`project_id`,                       
+                       `project`.`title`,
+                       `project`.`image_small`,                       
+                       `project_category`.`title` AS `catTitle`,                       
+                       (SELECT SUM(`amount`) FROM `plings` WHERE `plings`.`project_id`=`project`.`project_id` AND `plings`.`status_id`=2) AS `sumAmount`
+                FROM `plings`
+                 JOIN `project` ON `plings`.`project_id` = `project`.`project_id`
+                 JOIN `project_category` ON `project`.`project_category_id` = `project_category`.`project_category_id`                 
+                WHERE `plings`.`status_id` IN (2,3,4)
+                  AND `plings`.`member_id` = :member_id
+                  AND `project`.`status` = :project_status
+                  AND `project`.`type_id` = 1
+                GROUP BY `plings`.`project_id`
+                ORDER BY `sumAmount` DESC
                 ";
 
         if (null != $limit) {
@@ -1137,8 +1202,12 @@ class Application_Model_Member extends Application_Model_DbTable_Member
      *
      * @return array return an array of rows
      */
-    public function findUsername($value, $test_case_sensitive = self::CASE_INSENSITIVE, $omitMember = array(), $onlyActive = false)
-    {
+    public function findUsername(
+        $value,
+        $test_case_sensitive = self::CASE_INSENSITIVE,
+        $omitMember = array(),
+        $onlyActive = false
+    ) {
         $sql = "
             SELECT *
             FROM `member`
@@ -1296,33 +1365,5 @@ class Application_Model_Member extends Application_Model_DbTable_Member
             $product['project_category_id'] = $memberProject->project_category_id;
             $modelSearch->deleteDocument($product);
         }
-    }
-
-    public static function cleanAuthMemberForJson(array $authMember)
-    {
-        if (empty($authMember)) {
-            return $authMember;
-        }
-
-        $unwantedKeys = array(
-            'mail' => 0,
-            'firstname' => 0,
-            'lastname' => 0,
-            'street' => 0,
-            'zip' => 0,
-            'phone' => 0,
-            'paypal_mail' => 0,
-            'gravatar_email' => 0,
-            'source_pk' => 0,
-            'source_id' => 0,
-            'password_old' => 0,
-            'password_type_old' => 0,
-            'username_old' => 0,
-            'mail_old' => 0
-        );
-
-        $authMember = array_diff_key($authMember, $unwantedKeys);
-
-        return $authMember;
     }
 }
