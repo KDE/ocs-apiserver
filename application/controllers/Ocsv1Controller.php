@@ -1069,6 +1069,10 @@ class Ocsv1Controller extends Zend_Controller_Action
 
         // Specific content data
         $requestedId = (int)$this->getParam('content_id') ? (int)$this->getParam('content_id') : null;
+        if(!$requestedId) {
+            $requestedId = (int)$this->getParam('contentid') ? (int)$this->getParam('contentid') : null;
+        }
+        
         if ($requestedId) {
             $response = $this->fetchContent($requestedId, $previewPicSize, $smallPreviewPicSize, $pploadApi);
 
