@@ -1103,7 +1103,7 @@ class Ocsv1Controller extends Zend_Controller_Action
     ) {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
-        $cacheName = 'api_fetch_content_by_id_' . $contentId . $this->_format;
+        $cacheName = 'api_fetch_content_by_id_' . $contentId . $this->_format . $this->_getNameForStoreClient();
 
         if (($response = $cache->load($cacheName))) {
             return $response;
