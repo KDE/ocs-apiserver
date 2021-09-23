@@ -20,7 +20,7 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Created: 01.12.2017
- */
+ */ 
 
 /**
  * What changes from official OCS v1 spec
