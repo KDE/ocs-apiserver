@@ -94,7 +94,7 @@
  * /content/previewpic/123456789
  * /content/previewpic/123456789?size=medium
  */
-class Ocsv1Controller extends Zend_Controller_Action
+class Ocsv1Controller extends Zend_Controller_Action 
 {
 
     const COMMENT_TYPE_CONTENT = 1;
