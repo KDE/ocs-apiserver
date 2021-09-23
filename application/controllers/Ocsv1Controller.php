@@ -1423,7 +1423,19 @@ class Ocsv1Controller extends Zend_Controller_Action
             $fileTags = "";
 
             //mimetype
-            $fileTags .= "data##mimetype=" . $file['type'] . ",";
+            //$fileTags .= "data##mimetype=" . $file['type'] . ",";
+            if($file['type'] && strpos($file['type'], 'charset=')!==false)
+            {
+                $types = explode(";", $file['type']);               
+                if(sizeof($types)==2){
+                    $fileTags .= "data##mimetype=" . trim($types[0]) . ",";
+                    $fileTags .= "data##" . trim($types[1]) . ",";
+                }else{
+                    $fileTags .= "data##mimetype=" . $file['type'] . ",";
+                }
+            }else{
+                $fileTags .= "data##mimetype=" . $file['type'] . ",";
+            }
 
             //$fileTags .= "tags=".$fileTagArray->__toString().",";
 
@@ -1999,7 +2011,19 @@ class Ocsv1Controller extends Zend_Controller_Action
                 $fileTags = "";
 
                 //mimetype
-                $fileTags .= "data##mimetype=" . $file['type'] . ",";
+                //$fileTags .= "data##mimetype=" . $file['type'] . ",";
+                if($file['type'] && strpos($file['type'], 'charset=')!==false)
+                {
+                    $types = explode(";", $file['type']);               
+                    if(sizeof($types)==2){
+                        $fileTags .= "data##mimetype=" . trim($types[0]) . ",";
+                        $fileTags .= "data##" . trim($types[1]) . ",";
+                    }else{
+                        $fileTags .= "data##mimetype=" . $file['type'] . ",";
+                    }
+                }else{
+                    $fileTags .= "data##mimetype=" . $file['type'] . ",";
+                }
 
                 //$fileTags .= "tags=".$fileTagArray->__toString().",";
 
