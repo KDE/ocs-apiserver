@@ -1423,7 +1423,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $fileTags = "";
 
             //mimetype
-            //$fileTags .= "data##mimetype=" . $file['type'] . ",";
+            // $fileTags .= "data##mimetype=" . $file['type'] . ",";
             if($file['type'] && strpos($file['type'], 'charset=')!==false)
             {
                 $types = explode(";", $file['type']);               
