@@ -218,8 +218,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      */
     protected function _sendResponse($response, $format = 'xml', $xmlRootTag = 'ocs')
     {
-        header('Pragma: public');
-        header('Cache-Control: cache, must-revalidate');
+//        header('Cache-Control: max-age=0, no-cache');
         header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT', true);
 
         header("Access-Control-Allow-Origin: *");
@@ -227,6 +226,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         header("Access-Control-Request-Method: GET,POST,OPTIONS");
 
         $duration = 1800; // in seconds
+        header('Cache-Control: max-age='.$duration);
         $expires = gmdate("D, d M Y H:i:s", time() + $duration) . " GMT";
         header('Expires: ' . $expires);
         if ($format == 'json') {
