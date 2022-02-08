@@ -945,6 +945,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
         }
 
+        $etag = md5(json_encode($response));
+        header("Etag: $etag");
         $this->_sendResponse($response, $this->_format);
     }
 
