@@ -220,6 +220,7 @@ class Ocsv1Controller extends Zend_Controller_Action
     {
         header('Pragma: public');
         header('Cache-Control: cache, must-revalidate');
+        header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT', true);
 
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Headers: Accept,Authorization,X-Requested-With");
