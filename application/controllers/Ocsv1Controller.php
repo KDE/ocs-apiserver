@@ -1995,7 +1995,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                                                                          'download_package_type' => array('@text' => ''),
                                                                          'download_package_arch' => array('@text' => ''),
                                                                          'downloadtags'          => array('@text' => empty($fileTags) ? '' : $fileTags),
-                                                                         'downloadmd5sum'        => array('@text' => empty($file['md5sum']) ? '' : $file['md5sumd']))));
+                                                                         'downloadmd5sum'        => array('@text' => empty($file['md5sum']) ? '' : $file['md5sum']))));
                 }
 
             }

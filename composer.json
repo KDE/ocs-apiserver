@@ -1,14 +1,21 @@
 {
   "name": "ocs/ocs-apiserver",
-  "description": "",
-  "minimum-stability": "dev",
-  "license": "GNU Affero General Public License",
+  "description": "Started in 2001, OpenDesktop.org is one of the largest websites for the Free Software and Content community.",
+  "type": "project",
+  "minimum-stability": "stable",
+  "license": "AGPL-3.0-or-later",
   "authors": [
     {
-      "name": "Alexander",
-      "email": "alexander@pling.com"
+      "name": "pling GmbH",
+      "email": "contact@opendesktop.org"
     }
   ],
+  "homepage": "https://www.opendesktop.org/",
+  "require": {
+    "ext-dom": "*",
+    "ext-ctype": "*",
+    "ext-json": "*"
+  },
   "autoload": {
     "psr-0": {
       "": [
@@ -22,10 +29,5 @@
       "Controller_": "application/",
       "Plugin_": "application/"
     }
-  },
-  "require": {
-    "ext-dom": "*",
-    "ext-ctype": "*",
-    "ext-json": "*"
   }
 }

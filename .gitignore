@@ -3,7 +3,7 @@ local/*
 *.local*
 .htpasswd*
 .htaccess*
-.docker_init
+.docker
 Dockerfile.stage
 
 .idea*
