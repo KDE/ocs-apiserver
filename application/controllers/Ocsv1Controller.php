@@ -218,7 +218,7 @@ class Ocsv1Controller extends Zend_Controller_Action
      */
     protected function _sendResponse($response, $format = 'xml', $xmlRootTag = 'ocs')
     {
-//        header('Cache-Control: max-age=0, no-cache');
+        header('Pragma: public');
         header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT', true);
 
         header("Access-Control-Allow-Origin: *");
