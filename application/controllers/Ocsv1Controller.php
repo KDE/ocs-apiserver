@@ -28,7 +28,7 @@
  * What changes from official OCS v1 spec
  *
  * OCS specification:
- * http://www.freedesktop.org/wiki/Specifications/open-collaboration-services/
+ * https://www.freedesktop.org/wiki/Specifications/open-collaboration-services/
  *
  * ----
  *
@@ -1579,7 +1579,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         if (!empty($this->_params['user'])) {
-            $tableProjectSelect->where('member.username = ?', $this->_params['user']);
+            $tableProjectSelect->where('project.username = ?', $this->_params['user']);
         }
 
         if (!empty($this->_params['external'])) {
