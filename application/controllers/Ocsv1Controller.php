@@ -226,8 +226,8 @@ class Ocsv1Controller extends Zend_Controller_Action
         header("Access-Control-Request-Method: GET,POST,OPTIONS");
         header("Vary: Accept, Content-Type");
 
-//        $duration = 1800; // in seconds
-//        header('Cache-Control: max-age='.$duration);
+        $duration = 1800; // in seconds
+        header('Cache-Control: max-age='.$duration);
 //        $expires = gmdate("D, d M Y H:i:s", time() + $duration) . " GMT";
 //        header('Expires: ' . $expires);
         if ($format == 'json') {
