@@ -30,20 +30,18 @@ class Local_Application extends Zend_Application
      */
     protected $_configCache;
 
-    //Override
-
     /**
      * Constructor
      *
      * Initialize application. Potentially initializes include_paths, PHP
      * settings, and bootstrap class.
      *
-     * @param  string                   $environment
-     * @param  string|array|Zend_Config $options String path to configuration file, or array/Zend_Config of configuration options
-     * @param Zend_Cache_Core           $configCache
+     * @param string                   $environment
+     * @param string|array|Zend_Config $options String path to configuration file, or array/Zend_Config of
+     *                                          configuration options
      *
      * @throws Zend_Application_Exception
-     * @return \Local_Application
+     * @throws Zend_Cache_Exception
      */
     public function __construct($environment, $options = null)
     {
@@ -51,27 +49,29 @@ class Local_Application extends Zend_Application
         parent::__construct($environment, $options);
     }
 
+    /**
+     * @throws Zend_Cache_Exception
+     */
     protected function _initCache()
     {
-        $frontendOptions = array(
-            'lifetime'                => null,
-            'automatic_serialization' => true
-        );
+        $frontendOptions = array('lifetime'                => null,
+                                 'automatic_serialization' => true);
 
-        $backendOptions = array(
-            'cache_dir'              => APPLICATION_CACHE,
-            'file_locking'           => true,
-            'read_control'           => true,
-            'read_control_type'      => 'crc32',
-            'hashed_directory_level' => 0,
-            'hashed_directory_perm'  => 0700,
-            'file_name_prefix'       => 'ocs',
-            'cache_file_perm'        => 0700
-        );
+        $backendOptions = array('cache_dir'              => APPLICATION_CACHE,
+                                'file_locking'           => true,
+                                'read_control'           => true,
+                                'read_control_type'      => 'crc32',
+                                'hashed_directory_level' => 0,
+                                'hashed_directory_perm'  => 0700,
+                                'file_name_prefix'       => 'ocs',
+                                'cache_file_perm'        => 0700);
 
         return Zend_Cache::factory('Core', 'File', $frontendOptions, $backendOptions);
     }
 
+    /**
+     * @throws Zend_Cache_Exception
+     */
     public function getApplicationConfig()
     {
         $cacheName = APPLICATION_ENV . '_' . self::CACHE_APP_INI;
@@ -86,7 +86,7 @@ class Local_Application extends Zend_Application
     /**
      * Load configuration file of options
      *
-     * @param  string $file
+     * @param string $file
      *
      * @return array
      * @throws Zend_Application_Exception When invalid configuration file is provided
@@ -96,7 +96,7 @@ class Local_Application extends Zend_Application
     {
         $suffix = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-        if ($this->_configCache === null OR $suffix == 'php' OR $suffix == 'inc') { //No need for caching those
+        if ($this->_configCache === null or $suffix == 'php' or $suffix == 'inc') { //No need for caching those
             return parent::_loadConfig($file);
         }
 
@@ -119,7 +119,7 @@ class Local_Application extends Zend_Application
      * @param string $file
      * @param        $cacheId
      *
-     * @return bool|string
+     * @return bool
      */
     protected function _testCache($file, $cacheId)
     {
@@ -127,7 +127,7 @@ class Local_Application extends Zend_Application
 
         $cacheLastMTime = $this->_configCache->test($cacheId);
 
-        if ($cacheLastMTime !== false AND $configMTime < $cacheLastMTime) { //Valid cache?
+        if ($cacheLastMTime !== false and $configMTime < $cacheLastMTime) { //Valid cache?
             return true;
         }
 

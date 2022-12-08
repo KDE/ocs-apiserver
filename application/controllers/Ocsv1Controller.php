@@ -28,7 +28,7 @@
  * What changes from official OCS v1 spec
  *
  * OCS specification:
- * http://www.freedesktop.org/wiki/Specifications/open-collaboration-services/
+ * https://www.freedesktop.org/wiki/Specifications/open-collaboration-services/
  *
  * ----
  *
@@ -218,16 +218,18 @@ class Ocsv1Controller extends Zend_Controller_Action
      */
     protected function _sendResponse($response, $format = 'xml', $xmlRootTag = 'ocs')
     {
-        header('Pragma: public');
-        header('Cache-Control: cache, must-revalidate');
+//        header('Pragma: public');
+        header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT', true);
 
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Headers: Accept,Authorization,X-Requested-With");
         header("Access-Control-Request-Method: GET,POST,OPTIONS");
+        header("Vary: Accept, Content-Type");
 
-        $duration = 1800; // in seconds
-        $expires = gmdate("D, d M Y H:i:s", time() + $duration) . " GMT";
-        header('Expires: ' . $expires);
+//        $duration = 1800; // in seconds
+//        header('Cache-Control: max-age='.$duration);
+//        $expires = gmdate("D, d M Y H:i:s", time() + $duration) . " GMT";
+//        header('Expires: ' . $expires);
         if ($format == 'json') {
             header('Content-Type: application/json; charset=UTF-8');
             echo json_encode($response);
@@ -300,39 +302,6 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         return $dom;
-    }
-
-    /**
-     * @throws Zend_Exception
-     */
-    protected function _initConfig()
-    {
-        $clientConfig = $this->_loadClientConfig();
-
-        $credentials = '';
-        if (!empty($_SERVER['PHP_AUTH_USER']) && !empty($_SERVER['PHP_AUTH_PW'])) {
-            $credentials = $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] . '@';
-        }
-
-        $baseUri = $this->_uriScheme . '://' . $credentials . $_SERVER['SERVER_NAME'];
-
-        $webSite = Zend_Registry::get('config')->settings->client->default->website;
-
-        //Mask api.kde-look.org to store.kde.org
-        if (Zend_Registry::get('config')->settings->client->special->mapping_active == true) {
-            $mapping = Zend_Registry::get('config')->settings->client->special->mapping->toArray();
-
-            $webSite = $mapping[$this->_getNameForStoreClient()] ? $mapping[$this->_getNameForStoreClient()] : $webSite;
-        }
-
-        $this->_config = array('id'         => $_SERVER['SERVER_NAME'],
-                               'location'   => $baseUri . '/ocs/v1/',
-                               'name'       => $clientConfig['head']['browser_title'],
-                               'icon'       => $baseUri . $clientConfig['logo'],
-                               'termsofuse' => $webSite . '/content/terms',
-                               'register'   => $webSite . '/register',
-                               'website'    => $webSite,
-                               'host'       => $_SERVER['SERVER_NAME']) + $this->_config;
     }
 
     /**
@@ -548,6 +517,39 @@ class Ocsv1Controller extends Zend_Controller_Action
                                                                     'content' => array('ocsversion' => $this->_config['version']))));
 
         $this->_sendResponse($response, 'xml', 'providers');
+    }
+
+    /**
+     * @throws Zend_Exception
+     */
+    protected function _initConfig()
+    {
+        $clientConfig = $this->_loadClientConfig();
+
+        $credentials = '';
+        if (!empty($_SERVER['PHP_AUTH_USER']) && !empty($_SERVER['PHP_AUTH_PW'])) {
+            $credentials = $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] . '@';
+        }
+
+        $baseUri = $this->_uriScheme . '://' . $credentials . $_SERVER['SERVER_NAME'];
+
+        $webSite = Zend_Registry::get('config')->settings->client->default->website;
+
+        //Mask api.kde-look.org to store.kde.org
+        if (Zend_Registry::get('config')->settings->client->special->mapping_active == true) {
+            $mapping = Zend_Registry::get('config')->settings->client->special->mapping->toArray();
+
+            $webSite = $mapping[$this->_getNameForStoreClient()] ? $mapping[$this->_getNameForStoreClient()] : $webSite;
+        }
+
+        $this->_config = array('id'         => $_SERVER['SERVER_NAME'],
+                               'location'   => $baseUri . '/ocs/v1/',
+                               'name'       => $clientConfig['head']['browser_title'],
+                               'icon'       => $baseUri . $clientConfig['logo'],
+                               'termsofuse' => $webSite . '/content/terms',
+                               'register'   => $webSite . '/register',
+                               'website'    => $webSite,
+                               'host'       => $_SERVER['SERVER_NAME']) + $this->_config;
     }
 
     public function configAction()
@@ -944,6 +946,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             $response['meta']['debug']['param_store_client_name'] = $this->getParam('domain_store_id');
         }
 
+        $etag = md5(json_encode($response));
+        header("Etag: $etag");
         $this->_sendResponse($response, $this->_format);
     }
 
@@ -1576,7 +1580,7 @@ class Ocsv1Controller extends Zend_Controller_Action
         }
 
         if (!empty($this->_params['user'])) {
-            $tableProjectSelect->where('member.username = ?', $this->_params['user']);
+            $tableProjectSelect->where('project.username = ?', $this->_params['user']);
         }
 
         if (!empty($this->_params['external'])) {
