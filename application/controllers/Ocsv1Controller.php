@@ -1858,7 +1858,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                                         'personid'      => array('@text' => $project->member_username),
                                         'created'       => array('@text' => $created),
                                         'changed'       => array('@text' => $changed),
-                                        'downloads'     => array('@text' => $downloads),
+                                        'downloads'     => array('@text' => $project->num_downloads),
                                         'score'         => array('@text' => $score),
                                         'summary'       => array('@text' => ''),
                                         'description'   => array('@cdata' => $project->description),
