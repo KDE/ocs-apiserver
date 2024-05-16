@@ -1,38 +1,31 @@
 <?php
-
 /**
- *  ocs-webserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-webserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Created: 26.01.2017
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 class Application_Model_PpLoad
 {
     /**
      * @inheritDoc
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
-    public static function createDownloadUrl($collection_id, $file_name, array $params)
-    {
+    public static function createDownloadUrl($collection_id, $file_name, array $params) {
         $valid_until = time() + 3600; // one hour valid
         $hash = self::createDownloadHash($collection_id, $valid_until);
         $url = PPLOAD_API_URI . 'files/download';
@@ -48,10 +41,9 @@ class Application_Model_PpLoad
      * @param int $valid_until
      * @return string
      */
-    public static function createDownloadHash($collection_id, $valid_until)
-    {
+    public static function createDownloadHash($collection_id, $valid_until) {
         return hash('sha512',
-            PPLOAD_DOWNLOAD_SECRET . $collection_id . $valid_until); // order isn't important at all... just do the same when verifying
+                    PPLOAD_DOWNLOAD_SECRET . $collection_id . $valid_until); // order isn't important at all... just do the same when verifying
     }
 
     /**
@@ -61,8 +53,7 @@ class Application_Model_PpLoad
      * @return string
      * @throws Zend_Exception
      */
-    public static function createDownloadUrlJwt($collection_id, $file_name, array $payload)
-    {
+    public static function createDownloadUrlJwt($collection_id, $file_name, array $payload) {
         $valid_until = time() + 3600; // one hour valid
         $hash = self::createDownloadHash($collection_id, $valid_until);
         $payload['s'] = $hash;
@@ -73,7 +64,7 @@ class Application_Model_PpLoad
             $payload['stip'] = $requestIp;
         } catch (Zend_Session_Exception $e) {
             Zend_Registry::get('logger')->err(__METHOD__ . '   ' . $e->getMessage());
-//            error_log(__METHOD__ . '   ' . $e->getMessage());
+            //            error_log(__METHOD__ . '   ' . $e->getMessage());
         }
         $jwt = Application_Model_Jwt::encodeFromArray($payload);
 
@@ -89,15 +80,14 @@ class Application_Model_PpLoad
      * @throws Zend_Auth_Storage_Exception
      * @throws Zend_Exception
      */
-    public function uploadEmptyFileWithLink($projectId, $url, $filename, $fileDescription)
-    {
+    public function uploadEmptyFileWithLink($projectId, $url, $filename, $fileDescription) {
         $projectId = (int)$projectId;
 
         $projectData = $this->getProjectData($projectId);
 
         if (empty($projectData)) {
-            Zend_Registry::get('logger')->err(__METHOD__ . ' - ppload upload error. no project data found. project_id:'
-                                              . $projectId);
+            Zend_Registry::get('logger')
+                         ->err(__METHOD__ . ' - ppload upload error. no project data found. project_id:' . $projectId);
 
             return false;
         }
@@ -128,12 +118,11 @@ class Application_Model_PpLoad
 
         Zend_Registry::get('logger')->debug(__METHOD__ . ' - fileResponse: ' . print_r($fileResponse, true));
 
-        if (empty($fileResponse) OR empty($fileResponse->file) OR $fileResponse->status <> 'success') {
-            Zend_Registry::get('logger')->err(__METHOD__
-                                              . ' - ppload upload error. requestData:'
-                                              . print_r($fileRequest, true) . "\n" . 'response:'
-                                              . print_r($fileResponse, true)
-            );
+        if (empty($fileResponse) or empty($fileResponse->file) or $fileResponse->status <> 'success') {
+            Zend_Registry::get('logger')
+                         ->err(__METHOD__ . ' - ppload upload error. requestData:' . print_r($fileRequest,
+                                                                                             true) . "\n" . 'response:' . print_r($fileResponse,
+                                                                                                                                  true));
 
             return false;
         }
@@ -168,8 +157,7 @@ class Application_Model_PpLoad
      * @return Zend_Db_Table_Row_Abstract
      * @throws Zend_Db_Table_Exception
      */
-    protected function getProjectData($projectId)
-    {
+    protected function getProjectData($projectId) {
         $projectTable = new Default_Model_DbTable_Project();
 
         return $projectTable->find($projectId)->current();
@@ -178,13 +166,12 @@ class Application_Model_PpLoad
     /**
      * @return Ppload_Api
      */
-    protected function getPpLoadApi()
-    {
+    protected function getPpLoadApi() {
         return new Ppload_Api(array(
-            'apiUri'   => PPLOAD_API_URI,
-            'clientId' => PPLOAD_CLIENT_ID,
-            'secret'   => PPLOAD_SECRET
-        ));
+                                  'apiUri'   => PPLOAD_API_URI,
+                                  'clientId' => PPLOAD_CLIENT_ID,
+                                  'secret'   => PPLOAD_SECRET
+                              ));
     }
 
     /**
@@ -192,8 +179,7 @@ class Application_Model_PpLoad
      * @return bool
      * @throws Zend_Auth_Storage_Exception
      */
-    public function isAuthmemberProjectCreator($creator_id)
-    {
+    public function isAuthmemberProjectCreator($creator_id) {
         $auth = Zend_Auth::getInstance();
         $authMember = $auth->getStorage()->read();
         if ($authMember->member_id == $creator_id) {

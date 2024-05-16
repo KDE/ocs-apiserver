@@ -1,27 +1,23 @@
 <?php
-
 /**
- *  ocs-webserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-webserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *    Created: 22.09.2016
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_MemberEmail
 {
     const CASE_INSENSITIVE = 1;
@@ -33,10 +29,13 @@ class Application_Model_MemberEmail
     /**
      * @inheritDoc
      */
-    public function __construct($_dataTableName = 'Application_Model_DbTable_MemberEmail')
-    {
+    public function __construct($_dataTableName = 'Application_Model_DbTable_MemberEmail') {
         $this->_dataTableName = $_dataTableName;
         $this->_dataTable = new $this->_dataTableName;
+    }
+
+    public static function getHashForMailAddress($mail_address) {
+        return md5($mail_address);
     }
 
     /**
@@ -47,13 +46,11 @@ class Application_Model_MemberEmail
      * @throws Zend_Db_Statement_Exception
      * @throws Zend_Db_Table_Exception
      */
-    public function fetchAllMailAddresses($member_id, $email_deleted = false)
-    {
-        $deleted = $email_deleted === true ? Application_Model_DbTable_MemberEmail::EMAIL_DELETED
-            : Application_Model_DbTable_MemberEmail::EMAIL_NOT_DELETED;
-        $sql =
-            "SELECT * FROM {$this->_dataTable->info('name')} WHERE `email_member_id` = :memberId AND `email_deleted` = :emailDeleted";
-        $stmnt = $this->_dataTable->getAdapter()->query($sql, array('memberId' => $member_id, 'emailDeleted' => $deleted));
+    public function fetchAllMailAddresses($member_id, $email_deleted = false) {
+        $deleted = $email_deleted === true ? Application_Model_DbTable_MemberEmail::EMAIL_DELETED : Application_Model_DbTable_MemberEmail::EMAIL_NOT_DELETED;
+        $sql = "SELECT * FROM {$this->_dataTable->info('name')} WHERE `email_member_id` = :memberId AND `email_deleted` = :emailDeleted";
+        $stmnt = $this->_dataTable->getAdapter()
+                                  ->query($sql, array('memberId' => $member_id, 'emailDeleted' => $deleted));
 
         return $stmnt->fetchAll();
     }
@@ -67,8 +64,7 @@ class Application_Model_MemberEmail
      * @throws Zend_Db_Table_Exception
      * @throws Zend_Exception
      */
-    public function setDefaultEmail($emailId, $member_id)
-    {
+    public function setDefaultEmail($emailId, $member_id) {
         $result = $this->resetDefaultMailAddress($member_id);
         $this->_dataTable->setPrimary($emailId);
         $this->updateMemberPrimaryMail($member_id); /* if we change the mail in member table, we change the login. */
@@ -82,8 +78,7 @@ class Application_Model_MemberEmail
      * @return bool
      * @throws Zend_Db_Statement_Exception
      */
-    private function resetDefaultMailAddress($member_id)
-    {
+    private function resetDefaultMailAddress($member_id) {
         $sql = "UPDATE `member_email` SET `email_primary` = 0 WHERE `email_member_id` = :member_id AND `email_primary` = 1";
 
         return $this->_dataTable->getAdapter()->query($sql, array('member_id' => $member_id))->execute();
@@ -96,8 +91,7 @@ class Application_Model_MemberEmail
      * @throws Zend_Db_Statement_Exception
      * @throws Zend_Db_Table_Exception
      */
-    private function updateMemberPrimaryMail($member_id)
-    {
+    private function updateMemberPrimaryMail($member_id) {
         $dataEmail = $this->fetchMemberPrimaryMail($member_id);
 
         return $this->saveMemberPrimaryMail($member_id, $dataEmail);
@@ -109,8 +103,7 @@ class Application_Model_MemberEmail
      * @return mixed
      * @throws Zend_Db_Table_Exception
      */
-    public function fetchMemberPrimaryMail($member_id)
-    {
+    public function fetchMemberPrimaryMail($member_id) {
         $sql = "SELECT * FROM {$this->_dataTable->info('name')} WHERE email_member_id = :member_id AND email_primary = 1";
         $dataEmail = $this->_dataTable->getAdapter()->fetchRow($sql, array('member_id' => $member_id));
 
@@ -124,8 +117,7 @@ class Application_Model_MemberEmail
      * @return mixed
      * @throws Zend_Db_Statement_Exception
      */
-    protected function saveMemberPrimaryMail($member_id, $dataEmail)
-    {
+    protected function saveMemberPrimaryMail($member_id, $dataEmail) {
         $modelMember = new Application_Model_Member();
         $dataMember = $modelMember->fetchMemberData($member_id);
         $dataMember->mail = $dataEmail['email_address'];
@@ -140,10 +132,8 @@ class Application_Model_MemberEmail
      * @return int count of updated rows
      * @throws Zend_Db_Statement_Exception
      */
-    public function verificationEmail($verification)
-    {
-        $sql =
-            "UPDATE `member_email` SET `email_checked` = NOW() WHERE `email_verification_value` = :verification AND `email_deleted` = 0 AND `email_checked` IS NULL";
+    public function verificationEmail($verification) {
+        $sql = "UPDATE `member_email` SET `email_checked` = NOW() WHERE `email_verification_value` = :verification AND `email_deleted` = 0 AND `email_checked` IS NULL";
         $stmnt = $this->_dataTable->getAdapter()->query($sql, array('verification' => $verification));
 
         return $stmnt->rowCount();
@@ -157,14 +147,13 @@ class Application_Model_MemberEmail
      * @return Zend_Db_Table_Row_Abstract
      * @throws Exception
      */
-    public function saveEmail($user_id, $user_mail, $user_verification = null)
-    {
+    public function saveEmail($user_id, $user_mail, $user_verification = null) {
         $data = array();
         $data['email_member_id'] = $user_id;
         $data['email_address'] = $user_mail;
         $data['email_hash'] = md5($user_mail);
-        $data['email_verification_value'] =
-            empty($user_verification) ? Application_Model_MemberEmail::getVerificationValue($user_id, $user_mail) : $user_verification;
+        $data['email_verification_value'] = empty($user_verification) ? Application_Model_MemberEmail::getVerificationValue($user_id,
+                                                                                                                            $user_mail) : $user_verification;
 
         return $this->_dataTable->save($data);
     }
@@ -175,14 +164,8 @@ class Application_Model_MemberEmail
      *
      * @return string
      */
-    public static function getVerificationValue($user_name, $member_email)
-    {
+    public static function getVerificationValue($user_name, $member_email) {
         return md5($user_name . $member_email . time());
-    }
-
-    public static function getHashForMailAddress($mail_address)
-    {
-        return md5($mail_address);
     }
 
     /**
@@ -197,9 +180,8 @@ class Application_Model_MemberEmail
      * @throws Zend_Exception
      * @throws Exception
      */
-    public function saveEmailAsPrimary($user_id, $user_mail, $user_mail_checked = 0, $user_verification = null)
-    {
-        if (empty($user_id) OR empty($user_mail)) {
+    public function saveEmailAsPrimary($user_id, $user_mail, $user_mail_checked = 0, $user_verification = null) {
+        if (empty($user_id) or empty($user_mail)) {
             return false;
         }
 
@@ -208,8 +190,8 @@ class Application_Model_MemberEmail
         $data['email_address'] = $user_mail;
         $data['email_hash'] = MD5($user_mail);
         $data['email_checked'] = $user_mail_checked == 1 ? new Zend_Db_Expr('Now()') : new Zend_Db_Expr('NULL');
-        $data['email_verification_value'] =
-            empty($user_verification) ? Application_Model_MemberEmail::getVerificationValue($user_id, $user_mail) : $user_verification;
+        $data['email_verification_value'] = empty($user_verification) ? Application_Model_MemberEmail::getVerificationValue($user_id,
+                                                                                                                            $user_mail) : $user_verification;
         $data['email_primary'] = Application_Model_DbTable_MemberEmail::EMAIL_PRIMARY;
 
         $result = $this->_dataTable->save($data);
@@ -221,8 +203,7 @@ class Application_Model_MemberEmail
         return $result;
     }
 
-    private function resetOtherPrimaryEmail($user_id, $user_mail)
-    {
+    private function resetOtherPrimaryEmail($user_id, $user_mail) {
         $sql = "
                 UPDATE `member_email`
                 SET `email_primary` = 0
@@ -238,8 +219,7 @@ class Application_Model_MemberEmail
      * @return null
      * @throws Zend_Db_Table_Exception
      */
-    public function getValidationValue($member_id)
-    {
+    public function getValidationValue($member_id) {
         $memberData = $this->fetchMemberPrimaryMail($member_id);
         if (count($memberData) == 0) {
             return null;
@@ -256,8 +236,7 @@ class Application_Model_MemberEmail
      *
      * @return mixed
      */
-    public function findMailAddress($value, $test_case_sensitive = self::CASE_INSENSITIVE, $omitMember = array())
-    {
+    public function findMailAddress($value, $test_case_sensitive = self::CASE_INSENSITIVE, $omitMember = array()) {
         $sql = "
             SELECT *
             FROM `member_email`
@@ -276,25 +255,22 @@ class Application_Model_MemberEmail
         return $this->_dataTable->getAdapter()->fetchAll($sql, array('mail_address' => $value));
     }
 
-    public function sendConfirmationMail($val, $verificationVal)
-    {
+    public function sendConfirmationMail($val, $verificationVal) {
         $confirmMail = new Default_Plugin_SendMail('tpl_verify_user');
         $confirmMail->setTemplateVar('servername', $this->getServerName());
         $confirmMail->setTemplateVar('username', $val['username']);
         $confirmMail->setTemplateVar('verificationlinktext',
-            '<a href="https://' . $this->getServerName() . '/verification/' . $verificationVal
-            . '">Click here to verify your email address</a>');
+                                     '<a href="https://' . $this->getServerName() . '/verification/' . $verificationVal . '">Click here to verify your email address</a>');
         $confirmMail->setTemplateVar('verificationlink',
-            '<a href="https://' . $this->getServerName() . '/verification/' . $verificationVal . '">https://' . $this->getServerName()
-            . '/verification/' . $verificationVal . '</a>');
-        $confirmMail->setTemplateVar('verificationurl', 'https://' . $this->getServerName() . '/verification/' . $verificationVal);
+                                     '<a href="https://' . $this->getServerName() . '/verification/' . $verificationVal . '">https://' . $this->getServerName() . '/verification/' . $verificationVal . '</a>');
+        $confirmMail->setTemplateVar('verificationurl',
+                                     'https://' . $this->getServerName() . '/verification/' . $verificationVal);
         $confirmMail->setReceiverMail($val['mail']);
         $confirmMail->setFromMail('registration@opendesktop.org');
         $confirmMail->send();
     }
 
-    private function getServerName()
-    {
+    private function getServerName() {
         /** @var Zend_Controller_Request_Http $request */
         $request = Zend_Controller_Front::getInstance()->getRequest();
 

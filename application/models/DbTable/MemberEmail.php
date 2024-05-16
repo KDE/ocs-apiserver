@@ -1,25 +1,23 @@
 <?php
-
 /**
- *  ocs-webserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-webserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_DbTable_MemberEmail extends Local_Model_Table
 {
 
@@ -50,8 +48,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @return int
      * @throws Zend_Db_Statement_Exception
      */
-    public function setChecked($email_id)
-    {
+    public function setChecked($email_id) {
         $sql = "UPDATE `{$this->_name}` SET `email_checked` = NOW() WHERE `{$this->_key}` = :emailId";
         $stmnt = $this->_db->query($sql, array('emailId' => $email_id));
 
@@ -64,8 +61,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @return int
      * @throws Zend_Db_Statement_Exception
      */
-    public function setPrimary($email_id)
-    {
+    public function setPrimary($email_id) {
         $sql = "UPDATE `{$this->_name}` SET `email_primary` = 1 WHERE `{$this->_key}` = :emailId";
         $stmnt = $this->_db->query($sql, array('emailId' => $email_id));
 
@@ -79,8 +75,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @throws Zend_Db_Statement_Exception
      * @throws Zend_Exception
      */
-    public function setDeletedByMember($member_id)
-    {
+    public function setDeletedByMember($member_id) {
 
         $sql = "SELECT `email_id` FROM `member_email` WHERE `email_member_id` = :member_id AND `email_deleted` = 0";
         $emailsForDelete = $this->_db->fetchAll($sql, array(
@@ -104,8 +99,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @throws Zend_Db_Statement_Exception
      * @throws Zend_Exception
      */
-    public function setDeleted($member_id, $identifer)
-    {
+    public function setDeleted($member_id, $identifer) {
         $memberLog = new Application_Model_MemberDeactivationLog();
         $memberLog->logMemberEmailAsDeleted($member_id, $identifer);
 
@@ -118,8 +112,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @return int|void
      * @throws Zend_Db_Statement_Exception
      */
-    public function delete($email_id)
-    {
+    public function delete($email_id) {
         $sql = "UPDATE `{$this->_name}` SET `email_deleted` = 1 WHERE `{$this->_key}` = :emailId";
         $stmnt = $this->_db->query($sql, array('emailId' => $email_id));
 
@@ -133,8 +126,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @throws Zend_Db_Statement_Exception
      * @throws Zend_Exception
      */
-    public function setActivatedByMember($member_id)
-    {
+    public function setActivatedByMember($member_id) {
         $sql = "SELECT `e`.`email_id` 
                 FROM `member_email` `e`
                 JOIN `member_deactivation_log` `l` ON `l`.`object_type_id` = 2 AND `l`.`object_id` = `e`.`email_id` AND `l`.`deactivation_id` = `e`.`email_member_id`  AND `l`.`is_deleted` = 0
@@ -155,8 +147,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @throws Zend_Db_Statement_Exception
      * @throws Zend_Exception
      */
-    public function setActive($member_id, $identifer)
-    {
+    public function setActive($member_id, $identifer) {
         $memberLog = new Application_Model_MemberDeactivationLog();
         $memberLog->removeLogMemberEmailAsDeleted($member_id, $identifer);
 
@@ -169,8 +160,7 @@ class Application_Model_DbTable_MemberEmail extends Local_Model_Table
      * @return int|void
      * @throws Zend_Db_Statement_Exception
      */
-    public function activate($email_id)
-    {
+    public function activate($email_id) {
         $sql = "UPDATE `{$this->_name}` SET `email_deleted` = 0 WHERE `{$this->_key}` = :emailId";
         $stmnt = $this->_db->query($sql, array('emailId' => $email_id));
 

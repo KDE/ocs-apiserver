@@ -1,25 +1,23 @@
 <?php
-
 /**
- *  ocs-apiserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
 {
     protected $_name = "image";
@@ -53,15 +51,13 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
     );
     protected $_errorMsg = null;
 
-    public function getMemberImages($member_id)
-    {
+    public function getMemberImages($member_id) {
         $images = $this->select()->where('member_id = ?', $member_id)->query()->fetchAll();
 
         return $images;
     }
 
-    public function storeExternalImage($url, $fileExtension = null)
-    {
+    public function storeExternalImage($url, $fileExtension = null) {
         Zend_Registry::get('logger')->debug(__METHOD__ . ' - ' . print_r(func_get_args(), true));
         $tmpFileName = $this->storeRemoteImage($url, $fileExtension);
 
@@ -76,8 +72,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         return $filename;
     }
 
-    public function storeRemoteImage($url, $fileExtention = null, &$file_info = null)
-    {
+    public function storeRemoteImage($url, $fileExtention = null, &$file_info = null) {
         //$host = parse_url( $url, PHP_URL_HOST );
         //$path = parse_url($url, PHP_URL_PATH);
         //$query = parse_url($url, PHP_URL_QUERY);
@@ -116,8 +111,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         return $filename;
     }
 
-    public function file_get_contents_curl($url)
-    {
+    public function file_get_contents_curl($url) {
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_AUTOREFERER, true);
@@ -132,8 +126,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         return $data;
     }
 
-    public function _get_mime_content_type($filename)
-    {
+    public function _get_mime_content_type($filename) {
 
         if (!function_exists('mime_content_type')) {
 
@@ -204,8 +197,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         }
     }
 
-    public function saveImageOnMediaServer($filePathName)
-    {
+    public function saveImageOnMediaServer($filePathName) {
         if (empty($filePathName)) {
             return null;
         }
@@ -227,8 +219,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
                 }
             }
             Zend_Registry::get('logger')->debug(__METHOD__ . ' - Start upload picture - ' . print_r($destinationFile,
-                    true))
-            ;
+                                                                                                    true));
             $srcPathOnMediaServer = $this->sendImageToMediaServer($destinationFile, $content_type);
             if (file_exists($destinationFile)) {
                 if (false === unlink($destinationFile)) {
@@ -239,16 +230,15 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
                 throw new Exception("Error in upload to CDN-Server. \n Server message:\n" . $this->_errorMsg);
             }
 
-            Zend_Registry::get('logger')->debug(__METHOD__ . ' - End upload picture - ' . print_r(IMAGES_UPLOAD_PATH
-                    . $srcPathOnMediaServer, true))
-            ;
+            Zend_Registry::get('logger')
+                         ->debug(__METHOD__ . ' - End upload picture - ' . print_r(IMAGES_UPLOAD_PATH . $srcPathOnMediaServer,
+                                                                                   true));
 
             return $srcPathOnMediaServer;
         }
     }
 
-    private function _generateFilename($filePathName)
-    {
+    private function _generateFilename($filePathName) {
         return sha1_file($filePathName);
     }
 
@@ -258,8 +248,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
      *
      * @return string
      */
-    protected function sendImageToMediaServer($fullFilePath, $mimeType)
-    {
+    protected function sendImageToMediaServer($fullFilePath, $mimeType) {
         $config = Zend_Registry::get('config');
         $url = $config->images->media->upload;
 
@@ -277,8 +266,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         return $response->getBody();
     }
 
-    public function save($image)
-    {
+    public function save($image) {
         foreach ($image as $key => $value) {
             if (!in_array($key, array_keys($this->_fields))) {
                 unset($image[$key]);
@@ -296,8 +284,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         }
     }
 
-    private function _update($image)
-    {
+    private function _update($image) {
         if (!isset($image['id'])) {
             throw new Exception('Invalid update without an id');
         } else {
@@ -307,8 +294,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         return $this->update($image, array('id = ?' => $id));
     }
 
-    private function _add($image)
-    {
+    private function _add($image) {
         return $this->insert($image);
     }
 
@@ -319,10 +305,10 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
      * @throws Zend_Exception
      * @todo wrong place for this method
      */
-    public function saveImage($formFileElement)
-    {
+    public function saveImage($formFileElement) {
         if (empty($formFileElement)) {
             Zend_Registry::get('logger')->err(__METHOD__ . ' - form file element empty');
+
             return null;
         }
 
@@ -347,14 +333,12 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
             if (copy($fileInfo['tmp_name'], $destinationFile)) {
                 if (file_exists($fileInfo['tmp_name'])) {
                     if (false === unlink($fileInfo['tmp_name'])) {
-                        Zend_Registry::get('logger')->warn(__METHOD__ . ' - can not delete temp file: '
-                            . $fileInfo['tmp_name'])
-                        ;
+                        Zend_Registry::get('logger')
+                                     ->warn(__METHOD__ . ' - can not delete temp file: ' . $fileInfo['tmp_name']);
                     }
                 }
-                Zend_Registry::get('logger')->debug(__METHOD__ . ' - Start upload picture - '
-                    . print_r($destinationFile, true))
-                ;
+                Zend_Registry::get('logger')
+                             ->debug(__METHOD__ . ' - Start upload picture - ' . print_r($destinationFile, true));
                 $srcPathOnMediaServer = $this->sendImageToMediaServer($destinationFile, $contentType);
                 if (file_exists($destinationFile)) {
                     if (false === unlink($destinationFile)) {
@@ -364,9 +348,9 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
                 if (!$srcPathOnMediaServer) {
                     throw new Zend_Exception("Error in upload to CDN-Server. \n Server message:\n" . $this->_errorMsg);
                 }
-                Zend_Registry::get('logger')->debug(__METHOD__ . ' - End upload a picture - '
-                    . print_r(IMAGES_UPLOAD_PATH . $srcPathOnMediaServer, true))
-                ;
+                Zend_Registry::get('logger')
+                             ->debug(__METHOD__ . ' - End upload a picture - ' . print_r(IMAGES_UPLOAD_PATH . $srcPathOnMediaServer,
+                                                                                         true));
 
                 return $srcPathOnMediaServer;
             }
@@ -379,8 +363,7 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
      * @return array
      * @throws Zend_Exception
      */
-    public function saveImages($formFileElement)
-    {
+    public function saveImages($formFileElement) {
         if (empty($formFileElement)) {
             return array();
         }
@@ -400,16 +383,15 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
             $destinationFile = IMAGES_UPLOAD_PATH . $generatedFilename . $this->_allowed[$contentType];
 
             if (copy($fileInfo['tmp_name'], $destinationFile)) {
-                Zend_Registry::get('logger')->debug(__METHOD__ . ' - Start upload picture - '
-                    . print_r($destinationFile, true))
-                ;
+                Zend_Registry::get('logger')
+                             ->debug(__METHOD__ . ' - Start upload picture - ' . print_r($destinationFile, true));
                 $srcPathOnMediaServer = $this->sendImageToMediaServer($destinationFile, $contentType);
                 if (!$srcPathOnMediaServer) {
                     throw new Zend_Exception("Error in upload to CDN-Server. \n Server message:\n" . $this->_errorMsg);
                 }
-                Zend_Registry::get('logger')->debug(__METHOD__ . ' - End upload a picture - '
-                    . print_r(IMAGES_UPLOAD_PATH . $srcPathOnMediaServer, true))
-                ;
+                Zend_Registry::get('logger')
+                             ->debug(__METHOD__ . ' - End upload a picture - ' . print_r(IMAGES_UPLOAD_PATH . $srcPathOnMediaServer,
+                                                                                         true));
 
                 $resultPath[] = $srcPathOnMediaServer;
             }
@@ -418,33 +400,27 @@ class Application_Model_DbTable_Image extends Zend_Db_Table_Abstract
         return $resultPath;
     }
 
-    public function getAllowedFileExtension()
-    {
+    public function getAllowedFileExtension() {
         return $this->_allowedFileExtension;
     }
 
-    public function getAllowedMimeTypes()
-    {
+    public function getAllowedMimeTypes() {
         return array_keys($this->getAllowed());
     }
 
-    public function getAllowed()
-    {
+    public function getAllowed() {
         return $this->_allowed;
     }
 
-    public function setAllowed($allowed)
-    {
+    public function setAllowed($allowed) {
         $this->_allowed = $allowed;
     }
 
-    public function getMaxsize()
-    {
+    public function getMaxsize() {
         return $this->_maxsize;
     }
 
-    public function setMaxsize($maxsize)
-    {
+    public function setMaxsize($maxsize) {
         $this->_maxsize = $maxsize;
     }
 

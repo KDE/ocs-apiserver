@@ -1,25 +1,21 @@
 <?php
 /**
- *  ocs-apiserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Created: 01.12.2017
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 class Application_Model_ClientConfig
@@ -42,13 +38,11 @@ class Application_Model_ClientConfig
      * @link http://php.net/manual/en/language.oop5.decon.php
      * @param string $clientName
      */
-    function __construct($clientName)
-    {
+    function __construct($clientName) {
         $this->_clientName = $clientName;
     }
 
-    public function loadClientConfig()
-    {
+    public function loadClientConfig() {
         $clientFileId = '';
         if (false == empty($this->_clientName)) {
             $clientFileId = '_' . $this->_clientName;
@@ -67,24 +61,21 @@ class Application_Model_ClientConfig
     /**
      * @return null|array
      */
-    public function getConfig()
-    {
+    public function getConfig() {
         return $this->_clientConfigData;
     }
 
     /**
      * @return null|string
      */
-    public function getClientName()
-    {
+    public function getClientName() {
         return $this->_clientName;
     }
 
     /**
      * @return Zend_Form
      */
-    public function getForm()
-    {
+    public function getForm() {
         $form = new Backend_Form_Other_Config();
         $form->addElementPrefixPath('Backend_Form_Element', APPLICATION_PATH . '/backend/forms/elements');
         $form->addElement('hidden', 'client-name');
@@ -97,13 +88,12 @@ class Application_Model_ClientConfig
     }
 
     /**
-     * @param string $key
-     * @param mixed $value
+     * @param string    $key
+     * @param mixed     $value
      * @param Zend_Form $form
      * @return mixed
      */
-    private function generateSubForm($key, $value, $form)
-    {
+    private function generateSubForm($key, $value, $form) {
         if (false === is_object($form->getSubForm($key))) {
             $newSubForm = new Backend_Form_Other_SubFormConfig();
             $form->addSubForm($newSubForm, $key);
@@ -114,6 +104,7 @@ class Application_Model_ClientConfig
             $form->addElement('text', $key);
             $form->$key->setValue($value);
             $form->$key->setLabel($key);
+
             return $form;
         }
 
@@ -132,8 +123,7 @@ class Application_Model_ClientConfig
         return $form;
     }
 
-    public function saveClientConfig($getAllParams, $clientName = null)
-    {
+    public function saveClientConfig($getAllParams, $clientName = null) {
         $clientFileId = '';
         if (false == empty($clientName)) {
             $clientFileId = '_' . $clientName;
@@ -141,25 +131,22 @@ class Application_Model_ClientConfig
         $clientConfigPath = Zend_Registry::get('config')->settings->client->config->path;
         $clientConfigFileName = "client{$clientFileId}.ini.php";
 
-        file_put_contents($clientConfigPath.$clientConfigFileName, '<?php
+        file_put_contents($clientConfigPath . $clientConfigFileName, '<?php
 
-return '.var_export($getAllParams, true).';'
-        );
+return ' . var_export($getAllParams, true) . ';');
     }
 
     /**
      * @return array
      */
-    public function getClientConfigData()
-    {
+    public function getClientConfigData() {
         return $this->_clientConfigData;
     }
 
     /**
      * @return mixed
      */
-    public function getDefaultConfigLoaded()
-    {
+    public function getDefaultConfigLoaded() {
         return $this->defaultConfigLoaded;
     }
 

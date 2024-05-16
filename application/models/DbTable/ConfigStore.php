@@ -1,25 +1,21 @@
 <?php
 /**
- *  ocs-apiserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Created: 01.12.2017
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 class Application_Model_DbTable_ConfigStore extends Local_Model_Table
@@ -39,8 +35,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      * @return array
      * @throws Zend_Db_Select_Exception
      */
-    public function fetchHostnamesForJTable($id = null)
-    {
+    public function fetchHostnamesForJTable($id = null) {
         $select = $this->select()->from($this->_name)->columns('host')->group('host');
 
         $resultRows = $this->fetchAll($select);
@@ -60,8 +55,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    public function fetchAllStoresAndCategories($clearCache = false)
-    {
+    public function fetchAllStoresAndCategories($clearCache = false) {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
         $cacheName = self::CACHE_STORES_CATEGORIES;
@@ -82,20 +76,19 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
     /**
      * @return array
      */
-    private function queryAllStoresAndCategories()
-    {
+    private function queryAllStoresAndCategories() {
         $sql = "
                 SELECT
-                    config_store.`host`,
-                    config_store_category.store_id,
-                    config_store_category.project_category_id
+                    `config_store`.`host`,
+                    `config_store_category`.`store_id`,
+                    `config_store_category`.`project_category_id`
                 FROM
-                    config_store
+                    `config_store`
                 JOIN
-                    config_store_category ON config_store.store_id = config_store_category.store_id
+                    `config_store_category` ON `config_store`.`store_id` = `config_store_category`.`store_id`
                 JOIN
-                    project_category ON project_category.project_category_id = config_store_category.project_category_id
-                ORDER BY config_store.`host`,config_store_category.`order`,project_category.title;
+                    `project_category` ON `project_category`.`project_category_id` = `config_store_category`.`project_category_id`
+                ORDER BY `config_store`.`host`,`config_store_category`.`order`,`project_category`.`title`;
         ";
         $resultSet = $this->_db->fetchAll($sql);
 
@@ -107,8 +100,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      *
      * @return array
      */
-    private function createArrayAllStoresAndCategories($resultSetConfig)
-    {
+    private function createArrayAllStoresAndCategories($resultSetConfig) {
         $result = array();
         foreach ($resultSetConfig as $element) {
             $result[$element['host']][] = $element['project_category_id'];
@@ -123,8 +115,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    public function fetchDomainConfigIdList()
-    {
+    public function fetchDomainConfigIdList() {
         if (Zend_Registry::isRegistered('cache')) {
             /** @var Zend_Cache_Core $cache */
             $cache = Zend_Registry::get('cache');
@@ -145,9 +136,8 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
     /**
      * @return array
      */
-    private function queryDomainConfigIdList()
-    {
-        $sql = "SELECT host, config_id_name FROM config_store ORDER BY host;";
+    private function queryDomainConfigIdList() {
+        $sql = "SELECT `host`, `config_id_name` FROM `config_store` ORDER BY `host`;";
         $resultSet = $this->_db->fetchAll($sql);
 
         return $resultSet;
@@ -158,8 +148,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      *
      * @return array
      */
-    private function createDomainStoreIdArray($resultSetConfig)
-    {
+    private function createDomainStoreIdArray($resultSetConfig) {
         $result = array();
         foreach ($resultSetConfig as $element) {
             $result[$element['host']] = $element['config_id_name'];
@@ -173,8 +162,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    public function fetchDomainsStoreNameList()
-    {
+    public function fetchDomainsStoreNameList() {
         if (Zend_Registry::isRegistered('cache')) {
             /** @var Zend_Cache_Core $cache */
             $cache = Zend_Registry::get('cache');
@@ -195,8 +183,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
     /**
      * @return array
      */
-    private function queryDomains()
-    {
+    private function queryDomains() {
         $sql = "SELECT host, name FROM config_store ORDER BY `order`;";
         $resultSet = $this->_db->fetchAll($sql);
 
@@ -208,8 +195,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      *
      * @return array
      */
-    private function createDomainsArray($resultSetConfig)
-    {
+    private function createDomainsArray($resultSetConfig) {
         $result = array();
         foreach ($resultSetConfig as $element) {
             $result[$element['host']] = $element['name'];
@@ -221,8 +207,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
     /**
      * @return array
      */
-    public function fetchDomainObjects()
-    {
+    public function fetchDomainObjects() {
         $sql = "SELECT *  FROM config_store ORDER BY `order`;";
         $resultSet = $this->_db->fetchAll($sql);
 
@@ -234,8 +219,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      *
      * @throws Zend_Db_Statement_Exception
      */
-    public function deleteId($dataId)
-    {
+    public function deleteId($dataId) {
         $sql = "DELETE FROM config_store WHERE {$this->_key} = ?";
         $this->_db->query($sql, $dataId)->execute();
     }
@@ -247,8 +231,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    public function fetchAllStoresConfigArray($clearCache = false)
-    {
+    public function fetchAllStoresConfigArray($clearCache = false) {
         if (Zend_Registry::isRegistered('cache')) {
             /** @var Zend_Cache_Core $cache */
             $cache = Zend_Registry::get('cache');
@@ -274,8 +257,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
     /**
      * @return array
      */
-    private function queryStoreConfigArray()
-    {
+    private function queryStoreConfigArray() {
         $sql = "SELECT * FROM config_store ORDER BY `order`;";
         $resultSet = $this->_db->fetchAll($sql);
 
@@ -288,8 +270,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      *
      * @return array
      */
-    private function createStoreConfigArray($resultSetConfig, $key = 'host')
-    {
+    private function createStoreConfigArray($resultSetConfig, $key = 'host') {
         $result = array();
         foreach ($resultSetConfig as $element) {
             $result[$element[$key]] = $element;
@@ -305,8 +286,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    public function fetchAllStoresConfigByIdArray($clearCache = false)
-    {
+    public function fetchAllStoresConfigByIdArray($clearCache = false) {
         if (Zend_Registry::isRegistered('cache')) {
             /** @var Zend_Cache_Core $cache */
             $cache = Zend_Registry::get('cache');
@@ -337,8 +317,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    public function fetchConfigForStore($store_id, $clearCache = false)
-    {
+    public function fetchConfigForStore($store_id, $clearCache = false) {
         if (Zend_Registry::isRegistered('cache')) {
             /** @var Zend_Cache_Core $cache */
             $cache = Zend_Registry::get('cache');
@@ -364,8 +343,7 @@ class Application_Model_DbTable_ConfigStore extends Local_Model_Table
      *
      * @return mixed
      */
-    private function queryStoreConfig($store_id)
-    {
+    private function queryStoreConfig($store_id) {
         $sql = "SELECT * FROM config_store WHERE store_id = :store;";
         $resultSet = $this->_db->fetchRow($sql, array('store' => (int)$store_id));
 

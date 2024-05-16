@@ -1,25 +1,23 @@
 <?php
-
 /**
- *  ocs-webserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-webserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_Authorization
 {
 
@@ -38,8 +36,7 @@ class Application_Model_Authorization
     /**
      * @param string $_dataModelName
      */
-    function __construct($_dataModelName = 'Application_Model_DbTable_Member')
-    {
+    function __construct($_dataModelName = 'Application_Model_DbTable_Member') {
         $this->_dataModelName = $_dataModelName;
         $this->_dataTable = new $this->_dataModelName;
     }
@@ -48,8 +45,7 @@ class Application_Model_Authorization
      * @throws Zend_Session_Exception
      * @throws Zend_Exception
      */
-    public function logout()
-    {
+    public function logout() {
         $auth = Zend_Auth::getInstance();
         $auth->clearIdentity();
 
@@ -73,8 +69,7 @@ class Application_Model_Authorization
      * @throws Zend_Session_Exception
      * @throws exception
      */
-    public function authenticateUser($userId, $userSecret, $setRememberMe = false, $loginMethod = null)
-    {
+    public function authenticateUser($userId, $userSecret, $setRememberMe = false, $loginMethod = null) {
         if (false === empty($loginMethod)) {
             $this->_loginMethod = $loginMethod;
         }
@@ -99,8 +94,7 @@ class Application_Model_Authorization
      * @throws Zend_Auth_Adapter_Exception
      * @throws Zend_Exception
      */
-    public function authenticateCredentials($identity, $credential, $loginMethod = null)
-    {
+    public function authenticateCredentials($identity, $credential, $loginMethod = null) {
         /** @var Local_Auth_Adapter_Ocs $authAdapter */
         $authAdapter = Local_Auth_AdapterFactory::getAuthAdapter($identity, $credential, $loginMethod);
         $authAdapter->setIdentity($identity);
@@ -120,8 +114,7 @@ class Application_Model_Authorization
      * @throws Zend_Db_Statement_Exception
      * @throws Zend_Exception
      */
-    public function updateRememberMe($setRememberMe = false)
-    {
+    public function updateRememberMe($setRememberMe = false) {
         $modelRememberMe = new Application_Model_RememberMe();
         if (false == $setRememberMe) {
             $modelRememberMe->deleteSession();
@@ -139,8 +132,7 @@ class Application_Model_Authorization
      * @throws Zend_Auth_Storage_Exception
      * @throws exception
      */
-    protected function _storeAuthSessionData()
-    {
+    protected function _storeAuthSessionData() {
         $extendedAuthData = $this->getExtendedAuthUserData($this->_authUserData);
 
         $auth = Zend_Auth::getInstance();
@@ -153,10 +145,9 @@ class Application_Model_Authorization
      * @return object
      * @throws exception
      */
-    protected function getExtendedAuthUserData($authUserData)
-    {
+    protected function getExtendedAuthUserData($authUserData) {
         $extendedAuthUserData = new stdClass();
-        if (isset($this->_loginMethod) AND $this->_loginMethod == self::LOGIN_REMEMBER_ME) {
+        if (isset($this->_loginMethod) and $this->_loginMethod == self::LOGIN_REMEMBER_ME) {
             $modelMember = new Application_Model_Member();
             $memberData = $modelMember->fetchMemberData($authUserData->member_id);
             $extendedAuthUserData->external_id = $memberData->external_id;
@@ -181,8 +172,7 @@ class Application_Model_Authorization
      * @return string
      * @throws exception
      */
-    protected function getRoleNameForUserRole($roleId)
-    {
+    protected function getRoleNameForUserRole($roleId) {
         $database = Zend_Db_Table::getDefaultAdapter();
 
         $sql = "
@@ -205,8 +195,7 @@ class Application_Model_Authorization
      * @return array
      * @throws Zend_Db_Statement_Exception
      */
-    protected function getProjectIdsForUser($identifier)
-    {
+    protected function getProjectIdsForUser($identifier) {
         $database = Zend_Db_Table::getDefaultAdapter();
         $sql = "
                 SELECT `p`.`project_id`
@@ -224,8 +213,7 @@ class Application_Model_Authorization
      *
      * @return array
      */
-    protected function generateArrayWithKeyProjectId($inputArray)
-    {
+    protected function generateArrayWithKeyProjectId($inputArray) {
         $arrayWithKeyProjectId = array();
         foreach ($inputArray as $element) {
             $arrayWithKeyProjectId[$element['project_id']] = $element;
@@ -240,20 +228,18 @@ class Application_Model_Authorization
      *
      * @return int
      */
-    public function updateUserLastOnline($identifier, $identity)
-    {
+    public function updateUserLastOnline($identifier, $identity) {
         /** @var Zend_Db_Table_Abstract $dataTable */
         $dataTable = $this->_dataTable;
 
         return $dataTable->update(array('last_online' => new Zend_Db_Expr('NOW()')),
-            $dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ' . $identity);
+                                  $dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ' . $identity);
     }
 
     /**
      * @return object
      */
-    public function getAuthData()
-    {
+    public function getAuthData() {
         return $this->_authUserData;
     }
 
@@ -263,8 +249,7 @@ class Application_Model_Authorization
      * @throws Zend_Auth_Storage_Exception
      * @throws exception
      */
-    public function storeAuthSessionDataByIdentity($identity)
-    {
+    public function storeAuthSessionDataByIdentity($identity) {
         $authDataAll = $this->getAllAuthUserData('member_id', $identity);
 
         $auth = Zend_Auth::getInstance();
@@ -278,8 +263,7 @@ class Application_Model_Authorization
      * @return object
      * @throws exception
      */
-    protected function getAllAuthUserData($identifier, $identity)
-    {
+    protected function getAllAuthUserData($identifier, $identity) {
         $this->_authUserData = $this->getAuthUserData($identifier, $identity);
 
         return $this->getExtendedAuthUserData($this->_authUserData);
@@ -291,11 +275,10 @@ class Application_Model_Authorization
      *
      * @return object
      */
-    protected function getAuthUserData($identifier, $identity)
-    {
+    protected function getAuthUserData($identifier, $identity) {
         $dataTable = $this->_dataTable;
         $where = $dataTable->select()->where($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?',
-            $identity);
+                                             $identity);
         $resultRow = $dataTable->fetchRow($where)->toArray();
         unset($resultRow['password']);
 
@@ -307,8 +290,7 @@ class Application_Model_Authorization
      *
      * @return null|object
      */
-    public function getAuthUserDataFromUnverified($identity)
-    {
+    public function getAuthUserDataFromUnverified($identity) {
         $sql = "
             SELECT `m`.*, `member_email`.`email_verification_value`, `member_email`.`email_checked`, `mei`.`external_id` 
             FROM `member_email`
@@ -337,8 +319,7 @@ class Application_Model_Authorization
      * @throws Zend_Auth_Adapter_Exception
      * @throws Zend_Exception
      */
-    public function getAuthDataFromApi($identity, $credential, $loginMethod = null)
-    {
+    public function getAuthDataFromApi($identity, $credential, $loginMethod = null) {
         $authResult = $this->authenticateCredentials($identity, $credential, $loginMethod);
 
         if ($authResult->isValid()) {
@@ -357,10 +338,11 @@ class Application_Model_Authorization
      *
      * @return int
      */
-    public function removeAllCookieInformation($identifier, $identity)
-    {
+    public function removeAllCookieInformation($identifier, $identity) {
         $dataTable = new Application_Model_DbTable_Session();
-        $where = $dataTable->getAdapter()->quoteInto($dataTable->getAdapter()->quoteIdentifier($identifier, true) . ' = ?', $identity);
+        $where = $dataTable->getAdapter()->quoteInto($dataTable->getAdapter()
+                                                               ->quoteIdentifier($identifier, true) . ' = ?',
+            $identity);
 
         return $dataTable->delete($where);
     }
