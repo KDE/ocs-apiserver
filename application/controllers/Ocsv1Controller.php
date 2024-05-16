@@ -1480,7 +1480,7 @@ class Ocsv1Controller extends Zend_Controller_Action
             $downloadItems['downloadrepository' . $i] = '';
             $downloadItems['download_package_type' . $i] = null;
             $downloadItems['download_package_arch' . $i] = null;
-            $downloadItems['download_version' . $i] = $file['version'];
+            $downloadItems['download_version' . $i] = empty($file['version']) ? '' : $file['version'];
             $downloadItems['downloadtags' . $i] = empty($fileTags) ? '' : $fileTags;
             $downloadItems['downloadmd5sum' . $i] = empty($file['md5sum']) ? '' : $file['md5sum'];
             $i++;
@@ -1950,8 +1950,8 @@ class Ocsv1Controller extends Zend_Controller_Action
             $tableProject = new Application_Model_Project();
             $project = $tableProject->fetchRow($tableProject->select()
                                                             ->where('project_id = ?', $this->getParam('contentid'))
-                                                            ->where('status = ?',
-                                                                    Application_Model_DbTable_Project::PROJECT_ACTIVE));
+                                                            ->where('status = ?',Application_Model_DbTable_Project::PROJECT_ACTIVE)
+                                                );
         }
 
         if (!$project) {
@@ -1967,8 +1967,7 @@ class Ocsv1Controller extends Zend_Controller_Action
 
             //Load Files from DB
             $pploadFileTable = new Application_Model_DbTable_PploadFiles();
-            $files = $pploadFileTable->fetchActiveFileWithIndex($project->ppload_collection_id,
-                                                                $this->getParam('itemid'));
+            $files = $pploadFileTable->fetchActiveFileWithIndex($project->ppload_collection_id, $this->getParam('itemid'));
 
             if (empty($files)) {
                 $this->_sendErrorResponse(103, 'content item not found');
@@ -2032,8 +2031,6 @@ class Ocsv1Controller extends Zend_Controller_Action
 
                 $fileTags = rtrim($fileTags, ",");
 
-                //$downloadLink = PPLOAD_API_URI . 'files/download/id/' . $file['id'] . '/s/' . $hash . '/t/' . $timestamp . '/o/1/' . $file['name'];
-
                 $payload = array('id' => $file['id'], 'o' => '1');
                 $downloadLink = Application_Model_PpLoad::createDownloadUrlJwt($project->ppload_collection_id,
                                                                                $file['name'], $payload);
@@ -2055,8 +2052,9 @@ class Ocsv1Controller extends Zend_Controller_Action
                                 'repository'            => '',
                                 'download_package_type' => null,
                                 'download_package_arch' => null,
+                                'download_version'      => empty($file['version']) ? '' : $file['version'],
                                 'downloadtags'          => empty($fileTags) ? '' : $fileTags,
-                                'downloadmd5sum'        => empty($file['md5sum']) ? '' : $file['md5sumd']
+                                'downloadmd5sum'        => empty($file['md5sum']) ? '' : $file['md5sum']
                             )
                         )
                     );
@@ -2079,6 +2077,7 @@ class Ocsv1Controller extends Zend_Controller_Action
                                 'repository'            => array('@text' => ''),
                                 'download_package_type' => array('@text' => ''),
                                 'download_package_arch' => array('@text' => ''),
+                                'download_version'      => array('@text' => empty($file['version']) ? '' : $file['version']),
                                 'downloadtags'          => array('@text' => empty($fileTags) ? '' : $fileTags),
                                 'downloadmd5sum'        => array('@text' => empty($file['md5sum']) ? '' : $file['md5sum'])
                             )
