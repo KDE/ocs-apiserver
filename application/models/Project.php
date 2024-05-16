@@ -1,25 +1,23 @@
 <?php
-
 /**
- *  ocs-apiserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_Project extends Application_Model_DbTable_Project
 {
 
@@ -35,8 +33,24 @@ class Application_Model_Project extends Application_Model_DbTable_Project
     const ITEM_TYPE_PRODUCT = 1;
     const ITEM_TYPE_UPDATE = 2;
 
-    protected function _getCatIds($catids)
-    {
+    /**
+     * @param $projectId
+     *
+     * @return array
+     */
+    public function getGalleryPictureSources($projectId) {
+        $galleryPictureTable = new Application_Model_DbTable_ProjectGalleryPicture();
+        $stmt = $galleryPictureTable->select()->where('project_id = ?', $projectId)->order(array('sequence'));
+
+        $pics = array();
+        foreach ($galleryPictureTable->fetchAll($stmt) as $pictureRow) {
+            $pics[] = $pictureRow['picture_src'];
+        }
+
+        return $pics;
+    }
+
+    protected function _getCatIds($catids) {
         $sqlwhereCat = "";
         $sqlwhereSubCat = "";
 
@@ -64,41 +78,16 @@ class Application_Model_Project extends Application_Model_DbTable_Project
      *
      * @return Zend_Db_Table_Rowset_Abstract
      */
-    protected function generateRowSet($data)
-    {
+    protected function generateRowSet($data) {
         $classRowSet = $this->getRowsetClass();
 
         return new $classRowSet(array(
-            'table'    => $this,
-            'rowClass' => $this->getRowClass(),
-            'stored'   => true,
-            'data'     => $data
-        ));
+                                    'table'    => $this,
+                                    'rowClass' => $this->getRowClass(),
+                                    'stored'   => true,
+                                    'data'     => $data
+                                ));
     }
 
 
-
-    /**
-     * @param $projectId
-     *
-     * @return array
-     */
-    public function getGalleryPictureSources($projectId)
-    {
-        $galleryPictureTable = new Application_Model_DbTable_ProjectGalleryPicture();
-        $stmt = $galleryPictureTable->select()->where('project_id = ?', $projectId)->order(array('sequence'));
-
-        $pics = array();
-        foreach ($galleryPictureTable->fetchAll($stmt) as $pictureRow) {
-            $pics[] = $pictureRow['picture_src'];
-        }
-
-        return $pics;
-    }
-
-    
-
-    
-    
-    
 }

@@ -1,38 +1,35 @@
 <?php
 /**
- *  ocs-apiserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_DbRow_Base extends Zend_Db_Table_Row_Abstract
 {
 
     protected $_data = array();
 
-    function __construct($data = null)
-    {
+    function __construct($data = null) {
         foreach ($data as $key => $value) {
             $this->__set($key, $value);
         }
     }
 
-    public function __get($name)
-    {
+    public function __get($name) {
         $retValue = null;
         $lcName = strtolower($name);
         $method_name = 'get' . ucfirst($name);
@@ -50,8 +47,7 @@ class Application_Model_DbRow_Base extends Zend_Db_Table_Row_Abstract
         return $retValue;
     }
 
-    public function __set($name, $value)
-    {
+    public function __set($name, $value) {
         $lcName = strtolower($name);
         $method_name = 'set' . ucfirst($name);
 
@@ -68,8 +64,7 @@ class Application_Model_DbRow_Base extends Zend_Db_Table_Row_Abstract
         return $this;
     }
 
-    public function toArray()
-    {
+    public function toArray() {
         return $this->_data;
     }
 

@@ -1,39 +1,35 @@
 <?php
 /**
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *   ocs-apiserver
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *   Copyright 2016 by pling GmbH.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This file is part of ocs-apiserver.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 class ErrorController extends Zend_Controller_Action
 {
 
-    public function errorAction()
-    {
+    public function errorAction() {
         $errors = $this->_getParam('error_handler');
-        
+
         if (!$errors) {
             $message = 'You have reached the error page';
+
             return;
         }
-        
+
         switch ($errors->type) {
             case Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_ROUTE:
             case Zend_Controller_Plugin_ErrorHandler::EXCEPTION_NO_CONTROLLER:
@@ -50,7 +46,7 @@ class ErrorController extends Zend_Controller_Action
                 $message = 'Application error';
                 break;
         }
-        
+
         // Log exception, if logger available
         if ($log = $this->getLog()) {
             $log->log($message, $priority, $errors->exception);
@@ -58,24 +54,23 @@ class ErrorController extends Zend_Controller_Action
             $log->log('Request Parameters', $priority, $errors->request->getParams());
             $log->crit(print_r($errors->request->getParams(), true));
         }
-        
+
         // conditionally display exceptions
         if ($this->getInvokeArg('displayExceptions') == true) {
             $exception = $errors->exception;
         }
-        
-        $request   = $errors->request;
+
+        $request = $errors->request;
 
         $this->getResponse()->setHttpResponseCode(500);
-        $this->getResponse()->setBody(json_encode(array($message,$errors)));
+        $this->getResponse()->setBody(json_encode(array($message, $errors)));
     }
 
     /**
      * @return Zend_Log
      * @throws Zend_Exception
      */
-    public function getLog()
-    {
+    public function getLog() {
         //$bootstrap = $this->getInvokeArg('bootstrap');
         //if (!$bootstrap->hasResource('Log')) {
         //    return false;

@@ -1,25 +1,23 @@
 <?php
-
 /**
- *  ocs-apiserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_DbTable_Project extends Local_Model_Table
 {
 
@@ -80,14 +78,13 @@ class Application_Model_DbTable_Project extends Local_Model_Table
     /**
      * Override the insert method.
      *
-     * @see Zend_Db_Table_Abstract::insert()
-     *
      * @param array $data
      *
      * @return mixed
+     * @see Zend_Db_Table_Abstract::insert()
+     *
      */
-    public function insert(array $data)
-    {
+    public function insert(array $data) {
         //Insert
         if (!isset($data['description'])) {
             $data['description'] = null;
@@ -112,8 +109,7 @@ class Application_Model_DbTable_Project extends Local_Model_Table
         return parent::insert($data);
     }
 
-    public function getParent($pid)
-    {
+    public function getParent($pid) {
         $parent = $this->select()->where('project_id = ?', $pid)->query()->fetchAll();
         if (!empty($parent)) {
             return $parent[0];
@@ -122,8 +118,7 @@ class Application_Model_DbTable_Project extends Local_Model_Table
         }
     }
 
-    public function setSpamChecked($projectId, $spamChecked = 1)
-    {
+    public function setSpamChecked($projectId, $spamChecked = 1) {
         $sql = "update {$this->_name} set spam_checked = :spam_checked where project_id = :project_id";
         $this->_db->query($sql, array('spam_checked' => $spamChecked, 'project_id' => $projectId))->execute();
     }
@@ -133,9 +128,8 @@ class Application_Model_DbTable_Project extends Local_Model_Table
      *
      * @return bool
      */
-    public function deleteLikes($affectedRows)
-    {
-        if (false === is_array($affectedRows) OR (count($affectedRows) == 0)) {
+    public function deleteLikes($affectedRows) {
+        if (false === is_array($affectedRows) or (count($affectedRows) == 0)) {
             return false;
         }
 

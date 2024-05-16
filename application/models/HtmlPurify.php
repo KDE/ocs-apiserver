@@ -1,27 +1,23 @@
 <?php
-
 /**
- *  ocs-apiserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-apiserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Created: 21.06.2017
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 class Application_Model_HtmlPurify
 {
 
@@ -37,8 +33,7 @@ class Application_Model_HtmlPurify
      * @return string
      *
      */
-    public static function purify($dirty_html, $schema = self::ALLOW_NOTHING)
-    {
+    public static function purify($dirty_html, $schema = self::ALLOW_NOTHING) {
         return self::getPurifier($schema)->purify($dirty_html);
     }
 
@@ -48,21 +43,20 @@ class Application_Model_HtmlPurify
      * @return false|HTMLPurifier
      *
      */
-    public static function getPurifier($schema = self::ALLOW_NOTHING)
-    {
+    public static function getPurifier($schema = self::ALLOW_NOTHING) {
         include_once APPLICATION_LIB . '/HTMLPurifier.safe-includes.php';
         $config = HTMLPurifier_Config::createDefault();
 
         switch ($schema) {
             case self::ALLOW_HTML:
                 $config->set('HTML.Allowed',
-                    'em,strong,br,p,b,a[href],img[src|alt],i,li,ol,ul,small,abbr[title],acronym,blockquote,caption,cite,code,del,dl, dt, sub, sup,tt,var');
+                             'em,strong,br,p,b,a[href],img[src|alt],i,li,ol,ul,small,abbr[title],acronym,blockquote,caption,cite,code,del,dl, dt, sub, sup,tt,var');
                 break;
 
             case self::ALLOW_VIDEO:
                 $config->set('HTML.SafeIframe', true);
                 $config->set('URI.SafeIframeRegexp',
-                    '%^(https?:)?//(www\.youtube(?:-nocookie)?\.com/embed/|player\.vimeo\.com/video/)%'); //allow YouTube and Vimeo
+                             '%^(https?:)?//(www\.youtube(?:-nocookie)?\.com/embed/|player\.vimeo\.com/video/)%'); //allow YouTube and Vimeo
                 break;
 
             case self::ALLOW_URL:

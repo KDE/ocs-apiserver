@@ -1,27 +1,23 @@
 <?php
-
 /**
- *  ocs-webserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-webserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Created: 13.09.2017
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 class Application_Model_ConfigStore
 {
 
@@ -51,8 +47,7 @@ class Application_Model_ConfigStore
     public $changed_at;
     public $deleted_at;
 
-    public function __construct($storeHostName)
-    {
+    public function __construct($storeHostName) {
         $storeConfigArray = Zend_Registry::get('application_store_config_list');
         if (isset($storeConfigArray[$storeHostName])) {
             $storeConfig = $storeConfigArray[$storeHostName];
@@ -79,25 +74,22 @@ class Application_Model_ConfigStore
             $this->changed_at = $storeConfig['changed_at'];
             $this->deleted_at = $storeConfig['deleted_at'];
         } else {
-            Zend_Registry::get('logger')->warn(__METHOD__ . '(' . __LINE__ . ') - ' . $host
-                . ' :: no domain config context configured')
-            ;
+            Zend_Registry::get('logger')
+                         ->warn(__METHOD__ . '(' . __LINE__ . ') - ' . $host . ' :: no domain config context configured');
         }
     }
 
     /**
      * @return bool
      */
-    public function isShowHomepage()
-    {
+    public function isShowHomepage() {
         return $this->is_show_home == 1 ? true : false;
     }
 
     /**
      * @return bool
      */
-    public function isRenderReact()
-    {
+    public function isRenderReact() {
         return $this->render_view_postfix == 'react' ? true : false;
     }
 

@@ -22,30 +22,26 @@
  *
  */
 
-defined('APPLICATION_TIMEZONE')
-|| define('APPLICATION_TIMEZONE', (getenv('APPLICATION_TIMEZONE') ? getenv('APPLICATION_TIMEZONE') : 'UTC'));
+defined('APPLICATION_TIMEZONE') || define('APPLICATION_TIMEZONE',
+    (getenv('APPLICATION_TIMEZONE') ? getenv('APPLICATION_TIMEZONE') : 'UTC'));
 
 date_default_timezone_set(APPLICATION_TIMEZONE);
 
 // Define path to application directory
-defined('APPLICATION_PATH')
-|| define('APPLICATION_PATH', realpath(dirname(__FILE__) . '/../application'));
+defined('APPLICATION_PATH') || define('APPLICATION_PATH', realpath(dirname(__FILE__) . '/../application'));
 
 // Define application environment
-defined('APPLICATION_ENV')
-|| define('APPLICATION_ENV', (getenv('APPLICATION_ENV') ? getenv('APPLICATION_ENV') : 'production'));
+defined('APPLICATION_ENV') || define('APPLICATION_ENV',
+    (getenv('APPLICATION_ENV') ? getenv('APPLICATION_ENV') : 'production'));
 
 // Define path to application cache
-defined('APPLICATION_CACHE')
-|| define('APPLICATION_CACHE', realpath(dirname(__FILE__) . '/../data/cache'));
+defined('APPLICATION_CACHE') || define('APPLICATION_CACHE', realpath(dirname(__FILE__) . '/../data/cache'));
 
 // Define path to application cache
-defined('APPLICATION_DATA')
-|| define('APPLICATION_DATA', realpath(dirname(__FILE__) . '/../data'));
+defined('APPLICATION_DATA') || define('APPLICATION_DATA', realpath(dirname(__FILE__) . '/../data'));
 
 // Define path to application library
-defined('APPLICATION_LIB')
-|| define('APPLICATION_LIB', realpath(dirname(__FILE__) . '/../library'));
+defined('APPLICATION_LIB') || define('APPLICATION_LIB', realpath(dirname(__FILE__) . '/../library'));
 
 
 // Ensure library/ is on include_path
@@ -61,13 +57,13 @@ require APPLICATION_LIB . '/Zend/Loader/SplAutoloader.php';
 require APPLICATION_LIB . '/Zend/Loader/StandardAutoloader.php';
 require APPLICATION_LIB . '/Zend/Loader/AutoloaderFactory.php';
 Zend_Loader_AutoloaderFactory::factory(array(
-    'Zend_Loader_StandardAutoloader' => array(
-        'autoregister_zf' => true,
-        'namespaces'      => array(
-            'Application' => APPLICATION_PATH
-        )
-    )
-));
+                                           'Zend_Loader_StandardAutoloader' => array(
+                                               'autoregister_zf' => true,
+                                               'namespaces'      => array(
+                                                   'Application' => APPLICATION_PATH
+                                               )
+                                           )
+                                       ));
 
 // Including plugin cache file
 if (file_exists(APPLICATION_CACHE . DIRECTORY_SEPARATOR . 'pluginLoaderCache.php')) {

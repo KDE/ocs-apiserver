@@ -1,55 +1,58 @@
 <?php
-
 /**
- *  ocs-webserver
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *  Copyright 2016 by pling GmbH.
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *    This file is part of ocs-webserver.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- **/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 class Application_Model_DbTable_ProjectRating extends Local_Model_Table
 {
 
+    public static $options = array(1  => 'ugh',
+                                   2  => 'really bad',
+                                   3  => 'bad',
+                                   4  => 'soso',
+                                   5  => 'average',
+                                   6  => 'okay',
+                                   7  => 'good',
+                                   8  => 'great',
+                                   9  => 'excellent',
+                                   10 => 'the best'
+    );
     protected $_name = "project_rating";
-
     protected $_keyColumnsForRow = array('rating_id');
-
     protected $_key = 'rating_id';
-
-
-    public static $options = array(1 => 'ugh', 2=>'really bad',3=>'bad',4=>'soso',5=>'average', 6=>'okay',7=>'good', 8=>'great', 9=>'excellent',10=>'the best');
 
     /**
      * @param int $project_id
      *
      * @return array
      */
-    public function fetchRating($project_id)
-    {
+    public function fetchRating($project_id) {
         $sql = "
                 SELECT
-                   p.* ,
-                   (SELECT `profile_image_url` FROM member m WHERE m.member_id = p.member_id)  AS profile_image_url,
-                   (SELECT `username` FROM member m WHERE m.member_id = p.member_id)  AS username,
-                   (SELECT `comment_text` FROM comments c WHERE c.comment_id = p.comment_id)  AS comment_text
+                   `p`.* ,
+                   (SELECT `profile_image_url` FROM `member` `m` WHERE `m`.`member_id` = `p`.`member_id`)  AS `profile_image_url`,
+                   (SELECT `username` FROM `member` `m` WHERE `m`.`member_id` = `p`.`member_id`)  AS `username`,
+                   (SELECT `comment_text` FROM `comments` `c` WHERE `c`.`comment_id` = `p`.`comment_id`)  AS `comment_text`
                 FROM
-                    project_rating p
+                    `project_rating` `p`
                 WHERE
-                    project_id = :project_id and rating_active = 1
-                    ORDER BY created_at DESC
+                    `project_id` = :project_id AND `rating_active` = 1
+                    ORDER BY `created_at` DESC
                 ;
                ";
         $result = $this->_db->query($sql, array('project_id' => $project_id))->fetchAll();
@@ -63,8 +66,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
      *
      * @return null
      */
-    public function getProjectRateForUser($project_id, $member_id)
-    {
+    public function getProjectRateForUser($project_id, $member_id) {
         $sql = "
                 SELECT
                    p.* ,
@@ -90,8 +92,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
      *
      * @return mixed
      */
-    public function fetchRatingCntActive($project_id)
-    {
+    public function fetchRatingCntActive($project_id) {
         $sql = "
                 SELECT
                    count(*)
@@ -107,9 +108,8 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
         return $result;
     }
 
-    public function getScore($project_id)
-    {
-          $sql = "select (sum(t.totalscore)+4*5)/(sum(t.count)+4)*100 as score
+    public function getScore($project_id) {
+        $sql = "select (sum(t.totalscore)+4*5)/(sum(t.count)+4)*100 as score
                     from
                     (
                         select project_id
@@ -122,13 +122,11 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
                 ";
 
         $result = $this->_db->query($sql, array('project_id' => $project_id))->fetchAll();
-        if($result[0]['score'])
-        {
+        if ($result[0]['score']) {
             return $result[0]['score'];
-         }else
-         {
+        } else {
             return 500;
-         }
+        }
     }
 
     // public function getScore($project_id)
@@ -166,22 +164,19 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
     //      }
     // }
 
-    public function getScoreOld($project_id)
-    {
+    public function getScoreOld($project_id) {
         $sql = "
-            SELECT laplace_score(sum(pr.user_like), sum(pr.user_dislike)) AS score
-                FROM project_rating AS pr
-              WHERE pr.project_id = :project_id and (pr.rating_active = 1 or (rating_active=0 and user_like>1))
+            SELECT `laplace_score`(SUM(`pr`.`user_like`), SUM(`pr`.`user_dislike`)) AS `score`
+                FROM `project_rating` AS `pr`
+              WHERE `pr`.`project_id` = :project_id AND (`pr`.`rating_active` = 1 OR (`rating_active`=0 AND `user_like`>1))
               ";
 
         $result = $this->_db->query($sql, array('project_id' => $project_id))->fetchAll();
-        if($result[0]['score'])
-        {
+        if ($result[0]['score']) {
             return $result[0]['score'];
-         }else
-         {
+        } else {
             return 50;
-         }
+        }
     }
 
     /**
@@ -190,20 +185,19 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
      * @param int      $userRating
      * @param int|null $msg comment
      */
-    public function rateForProject($projectId, $member_id, $userRating, $msg )
-    {
+    public function rateForProject($projectId, $member_id, $userRating, $msg) {
         $msg = trim($msg);
-        if(strlen($msg)<1) return;
+        if (strlen($msg) < 1) return;
         $userLikeIt = $userRating == 1 ? 1 : 0;
         $userDislikeIt = $userRating == 2 ? 1 : 0;
-        $sql = 'select rating_id,comment_id from project_rating where project_id='.$projectId.'  and rating_active=1 and user_like='.$userLikeIt.' and user_dislike='.$userDislikeIt.' and member_id='.$member_id;
+        $sql = 'select rating_id,comment_id from project_rating where project_id=' . $projectId . '  and rating_active=1 and user_like=' . $userLikeIt . ' and user_dislike=' . $userDislikeIt . ' and member_id=' . $member_id;
         $result = $this->getAdapter()->fetchRow($sql);
-        $is_upvote=$userRating == 1 ? true : false;
-        $is_exist = (($result!=null) && ($result['rating_id']!=null))?true:false;
+        $is_upvote = $userRating == 1 ? true : false;
+        $is_exist = (($result != null) && ($result['rating_id'] != null)) ? true : false;
         $modelComments = new Application_Model_ProjectComments(array('db' => 'db2'));
 
         // Zend_Registry::get('logger')->info($msg);
-        if($is_exist){
+        if ($is_exist) {
             // this do cancel old rating .  remove rating & deactive
             $rating_id = $result['rating_id'];
             $comment_id = $result['comment_id'];
@@ -214,42 +208,40 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
             }else{
                 $this->rateUpdateProject($projectId,2);
             }*/
-        }else{
+        } else {
             // this do first rating or change from - to + or + to -
             // first comment
             $data = array();
-            $data['comment_target_id'] =$projectId;
-            $data['comment_member_id'] =$member_id;
+            $data['comment_target_id'] = $projectId;
+            $data['comment_member_id'] = $member_id;
             $data['comment_parent_id'] = 0;
             $data['comment_text'] = $msg;
             $tableReplies = new Application_Model_ProjectComments(array('db' => 'db2'));
             $result = $tableReplies->save($data);
-            $comment_id =  $result->comment_id;
+            $comment_id = $result->comment_id;
 
             // get old rating
-            $sql = 'select rating_id,comment_id,user_like from project_rating where project_id='.$projectId.'  and rating_active=1 and member_id='.$member_id;
+            $sql = 'select rating_id,comment_id,user_like from project_rating where project_id=' . $projectId . '  and rating_active=1 and member_id=' . $member_id;
             $result = $this->getAdapter()->fetchRow($sql);
-            if($result!=null && $result['rating_id']!=null){
-                 $this->update(array('rating_active' => 0), 'rating_id=' . $result['rating_id']);
+            if ($result != null && $result['rating_id'] != null) {
+                $this->update(array('rating_active' => 0), 'rating_id=' . $result['rating_id']);
                 $modelComments->deactiveComment($result['comment_id']);
             }
 
-            if($userLikeIt==1)
-            {
+            if ($userLikeIt == 1) {
                 $score = 8;
-            }else
-            {
+            } else {
                 $score = 3;
             }
             $this->save(array(
-                'project_id'    => $projectId,
-                'member_id'     => $member_id,
-                'user_like'     => $userLikeIt,
-                'user_dislike'  => $userDislikeIt,
-                'score'         => $score,
-                'rating_active' => 1,
-                'comment_id'    => $comment_id
-            ));
+                            'project_id'    => $projectId,
+                            'member_id'     => $member_id,
+                            'user_like'     => $userLikeIt,
+                            'user_dislike'  => $userDislikeIt,
+                            'score'         => $score,
+                            'rating_active' => 1,
+                            'comment_id'    => $comment_id
+                        ));
 
             // deal with project table ratings
             /*if(($result!=null) && ($result['rating_id']!=null)){
@@ -272,7 +264,6 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
 
     }
 
-   
 
     /**
      * @param int      $projectId
@@ -280,29 +271,27 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
      * @param int      $userRating
      * @param int|null $msg comment
      */
-    public function scoreForProject($projectId, $member_id, $score, $msg )
-    {
+    public function scoreForProject($projectId, $member_id, $score, $msg) {
         $msg = trim($msg);
-        $score =(int)$score;
-        if(strlen($msg)<1) return;
-        if($score<6){
+        $score = (int)$score;
+        if (strlen($msg) < 1) return;
+        if ($score < 6) {
             $userLikeIt = 0;
             $userDislikeIt = 1;
-        }else
-        {
+        } else {
             $userLikeIt = 1;
             $userDislikeIt = 0;
         }
 
-        $sql = 'select rating_id,comment_id from project_rating where project_id='.$projectId.'  and rating_active=1 and member_id='.$member_id;
+        $sql = 'select rating_id,comment_id from project_rating where project_id=' . $projectId . '  and rating_active=1 and member_id=' . $member_id;
         $result = $this->getAdapter()->fetchRow($sql);
 
-        $is_upvote=$score<6 ? false : true;
+        $is_upvote = $score < 6 ? false : true;
 
         //$is_exist = (($result!=null) && ($result['rating_id']!=null))?true:false;
         $modelComments = new Application_Model_ProjectComments(array('db' => 'db2'));
 
-        if($score<=0){
+        if ($score <= 0) {
             // this do cancel old rating .  remove rating & deactive
             $rating_id = $result['rating_id'];
             $comment_id = $result['comment_id'];
@@ -313,35 +302,35 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
             }else{
                 $this->rateUpdateProject($projectId,2);
             }*/
-        }else{
+        } else {
             // this do first rating or change from - to + or + to -
             // first comment
             $data = array();
-            $data['comment_target_id'] =$projectId;
-            $data['comment_member_id'] =$member_id;
+            $data['comment_target_id'] = $projectId;
+            $data['comment_member_id'] = $member_id;
             $data['comment_parent_id'] = 0;
             $data['comment_text'] = $msg;
             $result = $modelComments->save($data);
-            $comment_id =  $result->comment_id;
+            $comment_id = $result->comment_id;
 
             // get old rating
-            $sql = 'select rating_id,comment_id from project_rating where project_id='.$projectId.'  and rating_active=1 and member_id='.$member_id;
+            $sql = 'select rating_id,comment_id from project_rating where project_id=' . $projectId . '  and rating_active=1 and member_id=' . $member_id;
             $result = $this->getAdapter()->fetchRow($sql);
-            if($result!=null && $result['rating_id']!=null){
-                 $this->update(array('rating_active' => 0), 'rating_id=' . $result['rating_id']);
+            if ($result != null && $result['rating_id'] != null) {
+                $this->update(array('rating_active' => 0), 'rating_id=' . $result['rating_id']);
                 $modelComments->deactiveComment($result['comment_id']);
             }
 
 
             $this->save(array(
-                'project_id'    => $projectId,
-                'member_id'     => $member_id,
-                'user_like'     => $userLikeIt,
-                'user_dislike'  => $userDislikeIt,
-                'score'         => $score,
-                'rating_active' => 1,
-                'comment_id'    => $comment_id
-            ));
+                            'project_id'    => $projectId,
+                            'member_id'     => $member_id,
+                            'user_like'     => $userLikeIt,
+                            'user_dislike'  => $userDislikeIt,
+                            'score'         => $score,
+                            'rating_active' => 1,
+                            'comment_id'    => $comment_id
+                        ));
 
             // deal with project table ratings
             /*if(($result!=null) && ($result['rating_id']!=null)){
@@ -364,86 +353,86 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
 
     }
 
-      /**
+    /**
      * @param int      $projectId
      * @param int      $member_id
      * @param int      $userRating
      * @param int|null $msg comment
      */
-      /*
-    public function rateForProject($projectId, $member_id, $userRating, $msg )
-    {
-        $msg = trim($msg);
-        if(strlen($msg)<1) return;
-        $userLikeIt = $userRating == 1 ? 1 : 0;
-        $userDislikeIt = $userRating == 2 ? 1 : 0;
-        $sql = 'select rating_id,comment_id from project_rating where project_id='.$projectId.'  and rating_active=1 and user_like='.$userLikeIt.' and user_dislike='.$userDislikeIt.' and member_id='.$member_id;
-        $result = $this->getAdapter()->fetchRow($sql);
-        $is_upvote=$userRating == 1 ? true : false;
-        $is_exist = (($result!=null) && ($result['rating_id']!=null))?true:false;
-        $modelComments = new Default_Model_ProjectComments();
+    /*
+  public function rateForProject($projectId, $member_id, $userRating, $msg )
+  {
+      $msg = trim($msg);
+      if(strlen($msg)<1) return;
+      $userLikeIt = $userRating == 1 ? 1 : 0;
+      $userDislikeIt = $userRating == 2 ? 1 : 0;
+      $sql = 'select rating_id,comment_id from project_rating where project_id='.$projectId.'  and rating_active=1 and user_like='.$userLikeIt.' and user_dislike='.$userDislikeIt.' and member_id='.$member_id;
+      $result = $this->getAdapter()->fetchRow($sql);
+      $is_upvote=$userRating == 1 ? true : false;
+      $is_exist = (($result!=null) && ($result['rating_id']!=null))?true:false;
+      $modelComments = new Default_Model_ProjectComments();
 
-        // Zend_Registry::get('logger')->info($msg);
-        if($is_exist){
-            // this do cancel old rating .  remove rating & deactive
-            $rating_id = $result['rating_id'];
-            $comment_id = $result['comment_id'];
-            $this->update(array('rating_active' => 0), 'rating_id=' . $rating_id);
-            $modelComments->deactiveComment($comment_id);
-            if($is_upvote){
-               $this->rateUpdateProject($projectId,1);
-            }else{
-                $this->rateUpdateProject($projectId,2);
-            }
-        }else{
-            // this do first rating or change from - to + or + to -
-            // first comment
-            $data = array();
-            $data['comment_target_id'] =$projectId;
-            $data['comment_member_id'] =$member_id;
-            $data['comment_parent_id'] = 0;
-            $data['comment_text'] = $msg;
-            $tableReplies = new Default_Model_ProjectComments();
-            $result = $tableReplies->save($data);
-            $comment_id =  $result->comment_id;
+      // Zend_Registry::get('logger')->info($msg);
+      if($is_exist){
+          // this do cancel old rating .  remove rating & deactive
+          $rating_id = $result['rating_id'];
+          $comment_id = $result['comment_id'];
+          $this->update(array('rating_active' => 0), 'rating_id=' . $rating_id);
+          $modelComments->deactiveComment($comment_id);
+          if($is_upvote){
+             $this->rateUpdateProject($projectId,1);
+          }else{
+              $this->rateUpdateProject($projectId,2);
+          }
+      }else{
+          // this do first rating or change from - to + or + to -
+          // first comment
+          $data = array();
+          $data['comment_target_id'] =$projectId;
+          $data['comment_member_id'] =$member_id;
+          $data['comment_parent_id'] = 0;
+          $data['comment_text'] = $msg;
+          $tableReplies = new Default_Model_ProjectComments();
+          $result = $tableReplies->save($data);
+          $comment_id =  $result->comment_id;
 
-            // get old rating
-            $sql = 'select rating_id,comment_id,user_like from project_rating where project_id='.$projectId.'  and rating_active=1 and member_id='.$member_id;
-            $result = $this->getAdapter()->fetchRow($sql);
-            if($result!=null && $result['rating_id']!=null){
-                 $this->update(array('rating_active' => 0), 'rating_id=' . $result['rating_id']);
-                $modelComments->deactiveComment($result['comment_id']);
-            }
+          // get old rating
+          $sql = 'select rating_id,comment_id,user_like from project_rating where project_id='.$projectId.'  and rating_active=1 and member_id='.$member_id;
+          $result = $this->getAdapter()->fetchRow($sql);
+          if($result!=null && $result['rating_id']!=null){
+               $this->update(array('rating_active' => 0), 'rating_id=' . $result['rating_id']);
+              $modelComments->deactiveComment($result['comment_id']);
+          }
 
-            $this->save(array(
-                'project_id'    => $projectId,
-                'member_id'     => $member_id,
-                'user_like'     => $userLikeIt,
-                'user_dislike'  => $userDislikeIt,
-                'rating_active' => 1,
-                'comment_id'    => $comment_id
-            ));
+          $this->save(array(
+              'project_id'    => $projectId,
+              'member_id'     => $member_id,
+              'user_like'     => $userLikeIt,
+              'user_dislike'  => $userDislikeIt,
+              'rating_active' => 1,
+              'comment_id'    => $comment_id
+          ));
 
-            // deal with project table ratings
-            if(($result!=null) && ($result['rating_id']!=null)){
-                if($is_upvote){
-                      $this->rateUpdateProject($projectId,5);
-                }else{
-                     $this->rateUpdateProject($projectId,6);
-                }
-            }else{
-                // first time rating
-                if($is_upvote){
-                   $this->rateUpdateProject($projectId,3);
-                }else{
-                    $this->rateUpdateProject($projectId,4);
-                }
-            }
+          // deal with project table ratings
+          if(($result!=null) && ($result['rating_id']!=null)){
+              if($is_upvote){
+                    $this->rateUpdateProject($projectId,5);
+              }else{
+                   $this->rateUpdateProject($projectId,6);
+              }
+          }else{
+              // first time rating
+              if($is_upvote){
+                 $this->rateUpdateProject($projectId,3);
+              }else{
+                  $this->rateUpdateProject($projectId,4);
+              }
+          }
 
-        }
+      }
 
 
-    }*/
+  }*/
 
     /*private function rateUpdateProject($projectId,$action)
     {
@@ -491,16 +480,14 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
      *
      * @return array returns array of affected rows. can be empty.
      */
-    public function setDeletedByMemberId($memberId)
-    {
+    public function setDeletedByMemberId($memberId) {
         $sql = "
             UPDATE {$this->_name}
             SET rating_active = 0
             WHERE member_id = :member_id AND rating_active = 1
         ";
 
-        $sqlAffectedRows =
-            "SELECT rating_id, project_id, user_like, user_dislike FROM {$this->_name} WHERE member_id = :member_id AND rating_active = 1";
+        $sqlAffectedRows = "SELECT rating_id, project_id, user_like, user_dislike FROM {$this->_name} WHERE member_id = :member_id AND rating_active = 1";
         $affectedRows = $this->_db->fetchAll($sqlAffectedRows, array('member_id' => $memberId));
 
         $result = $this->_db->query($sql, array('member_id' => $memberId))->execute();
@@ -511,8 +498,7 @@ class Application_Model_DbTable_ProjectRating extends Local_Model_Table
         return array();
     }
 
-    public function getRatedForMember($member_id)
-    {
+    public function getRatedForMember($member_id) {
         $sql = "
                      SELECT
                        r.user_like

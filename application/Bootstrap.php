@@ -1,27 +1,23 @@
 <?php
-
 /**
+ * open content store api - part of Opendesktop.org platform project <https://www.opendesktop.org>.
  *
- *   ocs-apiserver
+ * Copyright (c) 2016-2024 pling GmbH.
  *
- *   Copyright 2016 by pling GmbH.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    This file is part of ocs-apiserver.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Affero General Public License as
- *    published by the Free Software Foundation, either version 3 of the
- *    License, or (at your option) any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Affero General Public License for more details.
- *
- *    You should have received a copy of the GNU Affero General Public License
- *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 {
     /**
@@ -33,20 +29,14 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
      * @throws Zend_Exception
      * @throws Zend_Session_Exception
      */
-    protected function _initSessionManagement()
-    {
-//        $session = $this->bootstrap('session');
-//        $domain = Local_Tools_ParseDomain::get_domain();
-//        Zend_Session::setOptions(array('cookie_domain'   => $domain));
-//        Zend_Session::start();
+    protected function _initSessionManagement() {
         Zend_Auth::getInstance()->setStorage(new Zend_Auth_Storage_NonPersistent());
     }
 
     /**
      * @return mixed
      */
-    protected function _initConfig()
-    {
+    protected function _initConfig() {
         /** $config Zend_Config */
         $config = $this->getApplication()->getApplicationConfig();
         Zend_Registry::set('config', $config);
@@ -57,8 +47,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
     /**
      * @throws Zend_Application_Bootstrap_Exception
      */
-    protected function _initLogger()
-    {
+    protected function _initLogger() {
         /** @var Zend_Log $logger */
         $logger = $this->getPluginResource('log')->getLog();
         $logger->registerErrorHandler();
@@ -70,8 +59,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
      * @throws Zend_Cache_Exception
      * @throws Zend_Exception
      */
-    protected function _initCache()
-    {
+    protected function _initCache() {
         if (Zend_Registry::isRegistered('cache')) {
             return Zend_Registry::get('cache');
         }
@@ -80,12 +68,10 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $options = $this->getOption('settings');
 
         if (true == $options['cache']['enabled']) {
-            $cache = Zend_Cache::factory(
-                $options['cache']['frontend']['type'],
-                $options['cache']['backend']['type'],
-                $options['cache']['frontend']['options'],
-                $options['cache']['backend']['options']
-            );
+            $cache = Zend_Cache::factory($options['cache']['frontend']['type'],
+                                         $options['cache']['backend']['type'],
+                                         $options['cache']['frontend']['options'],
+                                         $options['cache']['backend']['options']);
         } else {
             // Fallback settings for some (maybe development) environments which have no cache management installed.
 
@@ -112,12 +98,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
                 'cache_file_perm'        => 0700
             );
 
-            $cache = Zend_Cache::factory(
-                'Core',
-                'File',
-                $frontendOptions,
-                $backendOptions
-            );
+            $cache = Zend_Cache::factory('Core', 'File', $frontendOptions, $backendOptions);
         }
 
         Zend_Registry::set('cache', $cache);
@@ -137,8 +118,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
      * @throws Zend_Application_Bootstrap_Exception
      * @throws Zend_Exception
      */
-    protected function _initDbAdapter()
-    {
+    protected function _initDbAdapter() {
         $db = $this->bootstrap('db')->getResource('db');
 
         if ((APPLICATION_ENV == 'development')) {
@@ -152,38 +132,34 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         Zend_Registry::set('db', $db);
         Zend_Db_Table::setDefaultAdapter($db);
         Zend_Db_Table_Abstract::setDefaultAdapter($db);
-        
-        
+
+
         $config = Zend_Registry::get('config');
-        //$db2 = $this->bootstrap('db')->getResource('db2');
         try {
             $db2 = Zend_Db::factory($config->settings->db2->adapter, array(
-                'host'     => $config->settings->db2->params->host,
-                'username' => $config->settings->db2->params->username,
-                'password' => $config->settings->db2->params->password,
-                'dbname'   => $config->settings->db2->params->dbname,
-                'charset'  => $config->settings->db2->params->charset,
-                'type'  => $config->settings->db2->params->type,
-                'persistent'  => $config->settings->db2->params->persistent,
+                'host'                  => $config->settings->db2->params->host,
+                'username'              => $config->settings->db2->params->username,
+                'password'              => $config->settings->db2->params->password,
+                'dbname'                => $config->settings->db2->params->dbname,
+                'charset'               => $config->settings->db2->params->charset,
+                'type'                  => $config->settings->db2->params->type,
+                'persistent'            => $config->settings->db2->params->persistent,
                 'isDefaultTableAdapter' => FALSE
             ));
 
             Zend_Registry::set('db2', $db2);
-            
+
             $db2->getConnection();
-            
+
         } catch (Zend_Db_Adapter_Exception $e) {
-            Zend_Registry::get('logger')->err('Error Init DB2: '. $e->getTraceAsString());
-            //$e->getMessage();
+            Zend_Registry::get('logger')->err('Error Init DB2: ' . $e->getTraceAsString());
         } catch (Zend_Exception $e) {
-            Zend_Registry::get('logger')->err('Error Init DB2: '. $e->getTraceAsString());
-           //$e->getMessage();
+            Zend_Registry::get('logger')->err('Error Init DB2: ' . $e->getTraceAsString());
         }
-        
+
     }
 
-    protected function _initRouter()
-    {
+    protected function _initRouter() {
         /** @var Zend_Cache_Core $cache */
         $cache = Zend_Registry::get('cache');
 
@@ -216,8 +192,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         return $this->_router;
     }
 
-    protected function _initGlobalAppConst()
-    {
+    protected function _initGlobalAppConst() {
         $appConfig = $this->getResource('config');
 
         $imageConfig = $appConfig->images;
@@ -233,16 +208,14 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         defined('PPLOAD_DOWNLOAD_SECRET') || define('PPLOAD_DOWNLOAD_SECRET', $configFileserver->download_secret);
     }
 
-    protected function _initGlobalApplicationVars()
-    {
+    protected function _initGlobalApplicationVars() {
         $modelDomainConfig = new Application_Model_DbTable_ConfigStore();
         Zend_Registry::set('application_store_category_list', $modelDomainConfig->fetchAllStoresAndCategories());
         Zend_Registry::set('application_store_config_list', $modelDomainConfig->fetchAllStoresConfigArray());
         Zend_Registry::set('application_store_config_id_list', $modelDomainConfig->fetchAllStoresConfigByIdArray());
     }
 
-    protected function _initStoreDependentVars()
-    {
+    protected function _initStoreDependentVars() {
         /** @var $front Zend_Controller_Front */
         $front = $this->bootstrap('frontController')->getResource('frontController');
         $front->registerPlugin(new Application_Plugin_InitGlobalStoreVars());
